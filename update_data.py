@@ -1,4 +1,5 @@
 import os
+import shutil
 import pandas as pd
 import pandas_datareader.data as pdr
 import datetime as dt
@@ -9,24 +10,28 @@ def menu():
 		choice = choice.upper()
 
 		if (choice == 'H'):
-			removeHistoricalData()
+			removeData('hist_data/')
 			start, end = getDates()
-			getHistoricalData(start, end)
+			err = getHistoricalData(start, end)
+
+			f = open('hist_data/' + end, 'w')
+			f.write(str(err))
+			f.close
 			break
 
 		elif (choice == 'F'):
-			removeFinancialData()
+			removeData('financial_statements/')
 			getFinancialStatements()
 			break
 
 		elif (choice == 'B'):
-			removeHistoricalData()
+			removeData('hist_data/')
 			start, end = getDates()
 			getHistoricalData(start, end)
 
 			print("")
 
-			removeFinancialData()
+			removeData('financial_statements/')
 			getFinancialStatements()
 			break
 
@@ -51,6 +56,7 @@ def getDates():
 
 def getHistoricalData(start, end):
 	symbols = openSymbolsFile()
+	err = 0
 
 	for sym in symbols:
 		while True:
@@ -61,7 +67,10 @@ def getHistoricalData(start, end):
 				break
 
 			except Exception:
+				err += 1
 				print("---ERROR---")
+
+	return err
 
 def getFinancialStatements():
 	symbols = openSymbolsFile()
@@ -75,22 +84,12 @@ def getFinancialStatements():
 
 		print(sym)
 
-def removeHistoricalData():
-	symbols = openSymbolsFile()
+def removeData(dir):
+	for f in os.listdir(dir):
+		path = os.path.join(dir, f)
 
-	for sym in symbols:
-		if os.path.isfile('hist_data/' + sym + '.dat'):
-			os.remove('hist_data/' + sym + '.dat')
-
-def removeFinancialData():
-	symbols = openSymbolsFile()
-
-	for sym in symbols:
-		if os.path.isfile('financial_statements/inc_' + sym + '.dat'):
-			os.remove('financial_statements/inc_' + sym + '.dat')
-
-		if os.path.isfile('financial_statements/bal_' + sym + '.dat'):
-			os.remove('financial_statements/bal_' + sym + '.dat')
+		if os.path.isfile(path):
+			os.remove(path)
 
 def main():
 	menu()
