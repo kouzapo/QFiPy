@@ -48,6 +48,33 @@ class Portfolio:
 			stock.setWeight(weights[i])
 			i += 1
 
+	def calcMinVarLine(self, mv):
+		ret, cov_matrix = self.calcCovMatrix()
+		days = len(ret)
+		m = ret.mean() * days
+		C_inv = np.linalg.inv(cov_matrix.values)
+		e = np.ones(len(self.getStocks()))
+
+		eC_invM = np.dot(np.dot(e, C_inv), m)
+		mC_invM = np.dot(np.dot(m, C_inv), m)
+		mC_invE = np.dot(np.dot(m, C_inv), e)
+		eC_invE = np.dot(np.dot(e, C_inv), e)
+
+		eC_inv = np.dot(e, C_inv)
+		mC_inv = np.dot(m, C_inv)
+
+		A = np.linalg.det([[1, eC_invM], [mv, mC_invM]])
+		B = np.linalg.det([[eC_invE, 1], [mC_invE, mv]])
+		C = np.linalg.det([[eC_invE, eC_invM], [mC_invE, mC_invM]])
+
+		weights = (A * eC_inv + B * mC_inv) / C
+		i = 0
+
+		for stock in self.getStocks():
+			stock.setWeight(weights[i])
+			i += 1
+
+
 	def calcPortfolioSharpeRatio(self):
 		n = len(self.getStocks())
 		w = np.ones(n) / n
