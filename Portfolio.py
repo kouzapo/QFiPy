@@ -11,6 +11,11 @@ class Portfolio:
 	def addStock(self, stock):
 		self.getStocks().append(stock)
 
+	def getStocksWeights(self):
+		weights = [stock.getWeight() for stock in self.getStocks()]
+
+		return weights
+
 	def calcCovMatrix(self):
 		ret = {}
 
@@ -24,22 +29,20 @@ class Portfolio:
 
 	def calcPortfolioPerformance(self):
 		ret, cov_matrix = self.calcCovMatrix()
-		weights = []
 		days = len(ret)
 
-		for stock in self.getStocks():
-			weights.append(stock.getWeight())
+		weights = self.getStocksWeights()
 
-		portfolio_return = np.dot(ret.mean(), weights) * days
+		ex_ret = np.dot(ret.mean(), weights) * days
 		portfolio_std = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights))) * np.sqrt(days)
 
-		return portfolio_return, portfolio_std
+		return ex_ret, portfolio_std
 
 	def calcMinVarPortfolio(self):
 		ret, cov_matrix = self.calcCovMatrix()
 
-		e = np.ones(len(self.getStocks()))
 		C_inv = np.linalg.inv(cov_matrix.values)
+		e = np.ones(len(self.getStocks()))
 
 		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
 		i = 0
@@ -74,11 +77,7 @@ class Portfolio:
 			stock.setWeight(weights[i])
 			i += 1
 
+	def calcPortfolioSharpeRatio(self, rf):
+		ex_ret, std = self.calcPortfolioPerformance()
 
-	def calcPortfolioSharpeRatio(self):
-		n = len(self.getStocks())
-		w = np.ones(n) / n
-		rf = 0.01
-
-		ret, cov_matrix = self.calcCovMatrix()
-		var = np.dot(w, np.dot(cov_matrix, w)) * 252
+		return (ex_ret - rf) / std

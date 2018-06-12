@@ -1,30 +1,27 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
+from Stock import *
+from Portfolio import *
 
 def genRandomPortfolios(n, symbols):
-	results = {}
-
-	weights_record = []
-	return_record = []
-	std_record = []
+	results = []
 
 	for i in range(n):
 		print(i)
 		weights = np.random.random(len(symbols))
 		weights /= np.sum(weights)
-		weights_record.append(weights)
 
-		prtf_return, prtf_std = calcPortfolioPerf(weights, symbols)
+		i = 0
+		stocks = []
 
-		return_record.append(prtf_return)
-		std_record.append(prtf_std)
+		for s in symbols:
+			stocks.append(Stock(s, weights[i]))
+			i += 1
 
-	results['Weights'] = weights_record
-	results['Return'] = return_record
-	results['Std'] = std_record
+		results.append(Portfolio(stocks))
 
-	return pd.DataFrame(results)
+	return results
 
 def monteCarloCalculations(symbols, days):
 	price_dict = {}
@@ -45,7 +42,7 @@ def monteCarloCalculations(symbols, days):
 
 		price_dict[symbol] = price_series
 
-	return price_dict
+	return pd.DataFrame(price_dict)
 
 def runSimulation(n, symbols):
 	futurePrices = []

@@ -3,9 +3,9 @@ import pandas as pd
 
 class Stock:
 
-	def __init__(self, quote):
+	def __init__(self, quote, weight = 0):
 		self.quote = quote
-		self.weight = 0
+		self.weight = weight
 
 	def getQuote(self):
 		return self.quote
@@ -57,3 +57,6 @@ class Stock:
 		log_returns = np.log(close_df / close_df.shift(1))
 
 		return log_returns
+
+	def calcSimLogReturns(time_series):
+		pass
