@@ -32,25 +32,27 @@ class Stock:
 		income_statement = self.getIncomeStatement()
 		balance_sheet = self.getBalanceSheet()
 
-		inventory = float(balance_sheet.iloc[4])
-		total_current_assets = float(balance_sheet.iloc[6])
-		total_assets = float(balance_sheet.iloc[14])
+		'''inventory = float(balance_sheet.iloc[4])
+		#total_current_assets = float(balance_sheet.iloc[6])
+		total_assets = float(balance_sheet.iloc[15])
 		total_current_liabilities = float(balance_sheet.iloc[18])
-		total_liabilities = float(balance_sheet.iloc[24])
-		equity = float(balance_sheet.iloc[33])
+		total_liabilities = float(balance_sheet.iloc[24])'''
+		equity = float(balance_sheet.iloc[36])
 
 		gross_profit = float(income_statement.iloc[2])
-		net_income = float(income_statement.iloc[20])
+		net_income = float(income_statement.iloc[17])
+
+		ROE = net_income / equity
 
 		#Liquidity
-		current_ratio = total_current_assets / total_current_liabilities
+		'''current_ratio = total_current_assets / total_current_liabilities
 		quick_ratio = (total_current_assets - inventory) / total_current_liabilities
-		net_working_capital = total_current_assets - total_current_liabilities
+		net_working_capital = total_current_assets - total_current_liabilities'''
 
-		print(quick_ratio)
+		print(ROE)
 
 		#Dept
-		dept_ratio = total_liabilities / total_assets
+		#dept_ratio = total_liabilities / total_assets
 
 	def calcLogReturns(self):
 		close_df = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
