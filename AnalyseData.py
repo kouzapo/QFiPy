@@ -1,10 +1,10 @@
 import time
 
-from correlation_analysis import *
-from monte_carlo import *
+from CorrelationAnalysis import *
+from MonteCarlo import *
 from Stock import *
 from Portfolio import *
-from update_data import *
+from UpdateData import *
 
 st = time.time()
 
