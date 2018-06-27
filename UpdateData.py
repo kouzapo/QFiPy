@@ -12,6 +12,7 @@ def menu():
 			removeData('hist_data/')
 			start, end = getDates()
 			err = getHistoricalData(start, end)
+			getIndexData('DJI', start, end)
 
 			f = open('hist_data/' + end, 'w')
 			f.write(str(err))
@@ -34,8 +35,8 @@ def menu():
 			getFinancialStatements()
 			break
 
-def openSymbolsFile():
-	f = open('djia_symbols.dat', 'r')
+def openSymbolsFile(index):
+	f = open(index + '_symbols.dat', 'r')
 	symbols = []
 
 	for symbol in f:
@@ -54,7 +55,7 @@ def getDates():
 	return start, end
 
 def getHistoricalData(start, end):
-	symbols = openSymbolsFile()
+	symbols = openSymbolsFile('DJI')
 	err = 0
 
 	for sym in symbols:
@@ -71,8 +72,19 @@ def getHistoricalData(start, end):
 
 	return err
 
+def getIndexData(index, start, end):
+	while True:
+		try:
+			hist_dt = pdr.DataReader('^' + index, 'yahoo', start, end)
+			hist_dt.to_csv('hist_data/' + index + '.dat')
+			print(index)
+			break
+
+		except Exception:
+			print("---ERROR---")
+
 def getFinancialStatements():
-	symbols = openSymbolsFile()
+	symbols = openSymbolsFile('DJI')
 
 	for sym in symbols:
 		income_statement = pd.read_html('https://finance.yahoo.com/quote/' + sym + '/financials?p=' + sym)[0][1]

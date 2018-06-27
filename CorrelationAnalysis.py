@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-def openSymbolsFile():
-	f = open('djia_symbols.dat', 'r')
+def openSymbolsFile(index):
+	f = open(index + '_symbols.dat', 'r')
 	symbols = []
 
 	for symbol in f:
@@ -17,7 +17,7 @@ def calcCorrMatrix():
 	symbols_indexes = []
 	CloseData = []
 
-	for symbol in openSymbolsFile():
+	for symbol in openSymbolsFile('DJI'):
 		closeDF = np.array(pd.read_csv('hist_data/' + symbol + '.dat')['Adj Close'])
 		length = len(closeDF)
 
@@ -45,4 +45,4 @@ def main():
 	pass
 
 if __name__ == '__main__':
-    main()
+	main()
