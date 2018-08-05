@@ -1,14 +1,14 @@
 import pickle
 
-def writeToSer(obj, file_name):
-	out_file = open(file_name, 'wb')
-	pickle.dump(obj, out_file)
-	out_file.close()
+def writeToSer(obj, fileName):
+	outFile = open(fileName, 'wb')
+	pickle.dump(obj, outFile)
+	outFile.close()
 
-def readFromSer(file_name):
-	in_file = open(file_name, 'rb')
+def loadSer(fileName):
+	inFile = open(fileName, 'rb')
 
-	return pickle.load(in_file)
+	return pickle.load(inFile)
 
 def main():
 	pass

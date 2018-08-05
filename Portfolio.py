@@ -12,9 +12,7 @@ class Portfolio:
 		self.getStocks().append(stock)
 
 	def getStocksWeights(self):
-		weights = [stock.getWeight() for stock in self.getStocks()]
-
-		return weights
+		return np.array([stock.getWeight() for stock in self.getStocks()])
 
 	def calcCovMatrix(self):
 		ret = {}
@@ -76,8 +74,3 @@ class Portfolio:
 		for stock in self.getStocks():
 			stock.setWeight(weights[i])
 			i += 1
-
-	def calcPortfolioSharpeRatio(self, rf):
-		ex_ret, std = self.calcPortfolioPerformance()
-
-		return (ex_ret - rf) / std

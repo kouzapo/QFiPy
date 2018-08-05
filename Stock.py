@@ -1,6 +1,15 @@
 import numpy as np
 import pandas as pd
 
+#from scipy import stats
+from sklearn.linear_model import LinearRegression
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib import style
+
+style.use('ggplot')
+
 class Stock:
 
 	def __init__(self, quote, weight = 0):
@@ -15,6 +24,9 @@ class Stock:
 
 	def setWeight(self, weight):
 		self.weight = weight
+
+	def getBeta(self):
+		return self.beta
 
 	def getIncomeStatement(self):
 		return pd.read_csv('financial_statements/inc_' + self.quote + '.dat')
@@ -32,33 +44,58 @@ class Stock:
 		income_statement = self.getIncomeStatement()
 		balance_sheet = self.getBalanceSheet()
 
-		'''inventory = float(balance_sheet.iloc[4])
-		#total_current_assets = float(balance_sheet.iloc[6])
-		total_assets = float(balance_sheet.iloc[15])
-		total_current_liabilities = float(balance_sheet.iloc[18])
-		total_liabilities = float(balance_sheet.iloc[24])'''
 		equity = float(balance_sheet.iloc[36])
 
 		gross_profit = float(income_statement.iloc[2])
-		net_income = float(income_statement.iloc[17])
+		net_income = float(income_statement.iloc[24])
 
 		ROE = net_income / equity
 
-		#Liquidity
-		'''current_ratio = total_current_assets / total_current_liabilities
-		quick_ratio = (total_current_assets - inventory) / total_current_liabilities
-		net_working_capital = total_current_assets - total_current_liabilities'''
-
 		print(ROE)
 
-		#Dept
-		#dept_ratio = total_liabilities / total_assets
+	def getPrices(self):
+		DF = pd.read_csv('hist_data/' + self.quote + '.dat')
+
+		closeDF = DF['Adj Close']
+		dates = DF['Date']
+
+		return np.array(closeDF), np.array(dates)
 
 	def calcLogReturns(self):
-		close_df = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
-		log_returns = np.log(close_df / close_df.shift(1))
+		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
+		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
 
-		return log_returns
+		return np.array(logReturns)
 
-	def calcSimLogReturns(time_series):
-		pass
+	def calcBeta(self, benchmark):
+		stock_returns = self.calcLogReturns()
+		benchmark_returns = benchmark.calcLogReturns()
+
+		stock_returns = np.reshape(stock_returns, (len(stock_returns), 1))
+		benchmark_returns = np.reshape(benchmark_returns, (len(benchmark_returns), 1))
+
+		regressor = LinearRegression()
+		regressor.fit(benchmark_returns, stock_returns)
+
+		#print(regressor.coef_[0][0], regressor.intercept_[0])
+
+		self.beta = regressor.coef_[0][0]
+
+		print(self.beta)
+
+	def graphPrices(self):
+		closeDF, dates = self.getPrices()
+		dates = pd.to_datetime(dates)
+
+		fig, ax = plt.subplots(1)
+		fig.autofmt_xdate()
+		plt.plot(dates, closeDF, color = 'blue', linewidth = 1.4, label = "Price")
+		plt.title(self.getQuote())
+		plt.xlabel("Date")
+		plt.ylabel("Price")
+		plt.grid(True)
+		plt.legend(loc = 2)
+
+		xfmt = mdates.DateFormatter('%Y-%m-%d')
+		ax.xaxis.set_major_formatter(xfmt)
+		plt.show()

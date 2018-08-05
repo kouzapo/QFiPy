@@ -30,6 +30,21 @@ def calcCorrMatrix():
 
 	return D, symbols_indexes
 
+def calcBeta(bnmrk):
+	symbols_indexes = []
+	beta = []
+
+	benchmark = pd.read_csv('hist_data/' + bnmrk + '.dat')['Adj Close']
+	benchmark = np.log(benchmark / benchmark.shift(1))
+
+	for symbol in openSymbolsFile('DJI'):
+		closeDF = pd.read_csv('hist_data/' + symbol + '.dat')['Adj Close']
+		closeDF = np.log(closeDF / closeDF.shift(1))
+
+		beta.append(closeDF.cov(benchmark) / benchmark.var())
+
+	return np.array(beta)
+
 def getUniqueSymbols(perc):
 	corr_matrix, sym_indexes = calcCorrMatrix()
 	uncorr_pairs = []

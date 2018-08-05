@@ -1,39 +1,36 @@
 import time
+from scipy import stats
 
 from CorrelationAnalysis import *
 from Serialization import *
 from MonteCarlo import *
 from UpdateData import *
-from Graphs import *
 from Stock import *
+from Index import *
 from Portfolio import *
 
 st = time.time()
 
-symbols = getUniqueSymbols(0.015)
-print(symbols)
+i1 = Index('GSPC')
+s1 = Stock('FOX')
 
-stocks = [Stock(s) for s in symbols]
+'''ret = s1.calcLogReturns()
+res = stats.normaltest(ret)
+print(res)
 
-p1 = Portfolio(stocks)
-p1.calcMinVarLine(0.1)
-print(p1.calcPortfolioPerformance())
+m, std = stats.norm.fit(ret)
 
+plt.hist(s1.calcLogReturns(), bins = 75, color = 'blue', density = True)
+xmin, xmax = plt.xlim()
+x = np.linspace(xmin, xmax, 100)
+p = stats.norm.pdf(x, m, std)
 
-print(p1.getStocksWeights())
+plt.plot(x, p, color = 'red', linewidth = 1.4)
+plt.show()'''
 
-'''DJI_close = np.array(pd.read_csv('hist_data/DJI.dat')['Adj Close'])
-symbols = openSymbolsFile('DJI')
+#print(plt.style.available)
 
-D = {}
-
-for s in symbols:
-	D[s] = np.corrcoef(DJI_close, np.array(pd.read_csv('hist_data/' + s + '.dat')['Adj Close']))[0][1]
-
-for s, v in D.items():
-	print(s, v)'''
-
-
+s1.graphPrices()
 
 
 
