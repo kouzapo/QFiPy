@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class Portfolio:
 	def __init__(self, stocks):
@@ -21,25 +22,14 @@ class Portfolio:
 			ret[stock.getQuote()] = stock.calcLogReturns()
 
 		ret = pd.DataFrame(ret)
-		cov_matrix = ret.cov()
+		covMatrix = ret.cov()
 
-		return ret, cov_matrix
-
-	def calcPortfolioPerformance(self):
-		ret, cov_matrix = self.calcCovMatrix()
-		days = len(ret)
-
-		weights = self.getStocksWeights()
-
-		ex_ret = np.dot(ret.mean(), weights) * days
-		portfolio_std = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights))) * np.sqrt(days)
-
-		return ex_ret, portfolio_std
+		return ret, covMatrix
 
 	def calcMinVarPortfolio(self):
-		ret, cov_matrix = self.calcCovMatrix()
+		ret, covMatrix = self.calcCovMatrix()
 
-		C_inv = np.linalg.inv(cov_matrix.values)
+		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
 
 		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
@@ -50,10 +40,10 @@ class Portfolio:
 			i += 1
 
 	def calcMinVarLine(self, mv):
-		ret, cov_matrix = self.calcCovMatrix()
+		ret, covMatrix = self.calcCovMatrix()
 		days = len(ret)
 		m = ret.mean() * days
-		C_inv = np.linalg.inv(cov_matrix.values)
+		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
 
 		eC_invM = np.dot(np.dot(e, C_inv), m)
@@ -74,3 +64,48 @@ class Portfolio:
 		for stock in self.getStocks():
 			stock.setWeight(weights[i])
 			i += 1
+
+	def calcPerformance(self):
+		ret, covMatrix = self.calcCovMatrix()
+		days = len(ret)
+
+		weights = self.getStocksWeights()
+
+		exRet = np.dot(ret.mean(), weights) * days
+		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(days)
+
+		return exRet, std
+
+	def graphEfficientFrontier(self):
+		self.calcMinVarPortfolio()
+		m, s = self.calcPerformance()
+
+		R = np.arange(m, 1.0, 0.01)
+
+		portExpRet = []
+		portStd = []
+
+		for i in R:
+			self.calcMinVarLine(i)
+			m, s = self.calcPerformance()
+
+			portExpRet.append(m)
+			portStd.append(s)
+
+		stockExpRet = []
+		stockStd = []
+
+		for stock in self.getStocks():
+			ret = stock.calcLogReturns()
+
+			stockExpRet.append(ret.mean() * len(ret))
+			stockStd.append(ret.std() * np.sqrt(len(ret)))
+
+
+		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
+		plt.scatter(stockStd, stockExpRet, s = 20, color = 'red', label = "Asset")
+		plt.ylabel("Expected return")
+		plt.xlabel("Standard deviation")
+		plt.title("Efficient Frontier with indivitual assets")
+		plt.legend(loc = 2)
+		plt.show()

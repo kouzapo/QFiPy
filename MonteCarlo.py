@@ -5,20 +5,19 @@ from scipy import stats
 from Stock import *
 from Portfolio import *
 
-def genRandomPortfolios(n, symbols):
+def genRandomPortfolios(symbols, n):
 	results = []
 
 	for i in range(n):
-		print(i)
 		weights = np.random.random(len(symbols))
 		weights /= np.sum(weights)
 
-		i = 0
 		stocks = []
+		j = 0
 
 		for s in symbols:
-			stocks.append(Stock(s, weights[i]))
-			i += 1
+			stocks.append(Stock(s, weights[j]))
+			j += 1
 
 		results.append(Portfolio(stocks))
 

@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-#from scipy import stats
 from sklearn.linear_model import LinearRegression
+from scipy import stats
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -12,7 +12,7 @@ style.use('ggplot')
 
 class Stock:
 
-	def __init__(self, quote, weight = 0):
+	def __init__(self, quote, weight = 0, beta = 0):
 		self.quote = quote
 		self.weight = weight
 
@@ -53,13 +53,19 @@ class Stock:
 
 		print(ROE)
 
-	def getPrices(self):
+	def getPrices(self, return_dates = False):
 		DF = pd.read_csv('hist_data/' + self.quote + '.dat')
 
 		closeDF = DF['Adj Close']
 		dates = DF['Date']
 
-		return np.array(closeDF), np.array(dates)
+		if return_dates:
+			return np.array(closeDF), np.array(dates)
+		else:
+			return np.array(closeDF)
+
+	def getVolume(self):
+		return np.array(pd.read_csv('hist_data/' + self.quote + '.dat')['Volume'])
 
 	def calcLogReturns(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
@@ -67,24 +73,34 @@ class Stock:
 
 		return np.array(logReturns)
 
-	def calcBeta(self, benchmark):
-		stock_returns = self.calcLogReturns()
-		benchmark_returns = benchmark.calcLogReturns()
+	def calcBeta(self, benchmark, graph = False):
+		stockReturns = self.calcLogReturns()
+		benchmarkReturns = benchmark.calcLogReturns()
 
-		stock_returns = np.reshape(stock_returns, (len(stock_returns), 1))
-		benchmark_returns = np.reshape(benchmark_returns, (len(benchmark_returns), 1))
+		stockReturns = np.reshape(stockReturns, (len(stockReturns), 1))
+		benchmarkReturns = np.reshape(benchmarkReturns, (len(benchmarkReturns), 1))
 
 		regressor = LinearRegression()
-		regressor.fit(benchmark_returns, stock_returns)
-
-		#print(regressor.coef_[0][0], regressor.intercept_[0])
+		regressor.fit(benchmarkReturns, stockReturns)
 
 		self.beta = regressor.coef_[0][0]
 
-		print(self.beta)
+		if graph:
+			plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.6, label = "Returns")
+			plt.plot(benchmarkReturns, regressor.coef_ * benchmarkReturns + regressor.intercept_, color = 'red', linewidth = 2, label = "Fitting line")
+			plt.ylabel(self.quote + " Log Returns")
+			plt.xlabel(benchmark.getQuote() + " Log Returns")
+			plt.legend(loc = 2)
+			plt.title(self.quote + ' aganinst ' + benchmark.getQuote() + ' Log returns, β = ' + str(round(self.beta, 3)))
+			plt.show()
+
+			return self.beta
+
+		#print(regressor.coef_[0][0], regressor.intercept_[0])
+		return self.beta
 
 	def graphPrices(self):
-		closeDF, dates = self.getPrices()
+		closeDF, dates = self.getPrices(return_dates = True)
 		dates = pd.to_datetime(dates)
 
 		fig, ax = plt.subplots(1)

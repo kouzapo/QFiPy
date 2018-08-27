@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib import style
 
-#style.use('ggplot')
+style.use('ggplot')
 
 class Index:
 	def __init__(self, quote):
@@ -14,13 +14,16 @@ class Index:
 	def getQuote(self):
 		return self.quote
 
-	def getPrices(self):
+	def getPrices(self, return_dates = False):
 		DF = pd.read_csv('hist_data/' + self.quote + '.dat')
 
 		closeDF = DF['Adj Close']
 		dates = DF['Date']
 
-		return np.array(closeDF), np.array(dates)
+		if return_dates:
+			return np.array(closeDF), np.array(dates)
+		else:
+			return np.array(closeDF)
 
 	def calcLogReturns(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
@@ -29,7 +32,7 @@ class Index:
 		return np.array(logReturns)
 
 	def graphPrices(self):
-		closeDF, dates = self.getPrices()
+		closeDF, dates = self.getPrices(return_dates = True)
 		dates = pd.to_datetime(dates)
 
 		fig, ax = plt.subplots(1)
