@@ -1,18 +1,22 @@
 import pickle
+import numpy as np
 import pandas as pd
+
+def getRiskFreeRate():
+	return float(np.array(pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1][9])[-1]) / 100
 
 def writeToSer(obj, fileName):
 	outFile = open(fileName, 'wb')
 	pickle.dump(obj, outFile)
 	outFile.close()
 
-def loadSer(fileName):
+def readFromSer(fileName):
 	inFile = open(fileName, 'rb')
 
 	return pickle.load(inFile)
 
 def getDJISymbols():
-	f = open('djia_symbols.dat', 'w')
+	f = open('DJI_symbols.dat', 'w')
 	DJIA_list = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
 
 	for symbol in DJIA_list[1][2][1:]:
@@ -20,8 +24,8 @@ def getDJISymbols():
 
 	f.close()
 
-def getGSPCymbols():
-	f = open('spx_symbols.dat', 'w')
+def getGSPCSymbols():
+	f = open('GSPC_symbols.dat', 'w')
 	SPX_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
 
 	for symbol in SPX_list[0][0][1:]:

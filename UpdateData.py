@@ -1,15 +1,17 @@
-from Utilities import *
 import os
+import datetime as dt
+
 import pandas as pd
 import pandas_datareader.data as pdr
-import datetime as dt
+
+from Utilities import openSymbolsFile, progressBar
 
 def updateDataMenu():
 	while True:
 		os.system('cls')
 
 		print("Update Data")
-		print('=' * 80)
+		print('=' * 75)
 
 		choice = input("1. Update historical data\n2. Update financial statements\n3. Both\n4. Back\n\nChoice: ")
 		choice = choice.upper()
@@ -58,7 +60,7 @@ def updateDataMenu():
 			break
 
 		elif int(choice) == 4:
-			menu()
+			break
 
 def getDates():
 	end = str(dt.datetime.now().year) + '-' + str(dt.datetime.now().month) + '-' + str(dt.datetime.now().day)
@@ -68,7 +70,7 @@ def getDates():
 	return start, end
 
 def getHistoricalData(start, end):
-	symbols = openSymbolsFile('DJI')
+	symbols = openSymbolsFile('GSPC')
 	l = len(symbols)
 	err = 0
 	i = 0
@@ -78,8 +80,8 @@ def getHistoricalData(start, end):
 	for sym in symbols:
 		while True:
 			try:
-				hist_dt = pdr.DataReader(sym, 'yahoo', start, end)
-				hist_dt.to_csv('hist_data/' + sym + '.dat')
+				histDF = pdr.DataReader(sym, 'yahoo', start, end)
+				histDF.to_csv('hist_data/' + sym + '.dat')
 				#print(sym)
 				i += 1
 				progressBar(i, l, prefix = 'Progress:', length = 50)
@@ -94,8 +96,8 @@ def getHistoricalData(start, end):
 def getIndexData(index, start, end):
 	while True:
 		try:
-			hist_dt = pdr.DataReader('^' + index, 'yahoo', start, end)
-			hist_dt.to_csv('hist_data/' + index + '.dat')
+			histDF = pdr.DataReader('^' + index, 'yahoo', start, end)
+			histDF.to_csv('hist_data/' + index + '.dat')
 			#print(index)
 			break
 

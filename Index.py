@@ -25,25 +25,44 @@ class Index:
 		else:
 			return np.array(closeDF)
 
+	def getVolume(self):
+		return np.array(pd.read_csv('hist_data/' + self.quote + '.dat')['Volume'])
+
 	def calcLogReturns(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
 		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		return np.array(logReturns)
 
+	def calcExpReturn(self):
+		logReturns = self.calcLogReturns()
+
+		return logReturns.mean() * len(logReturns)
+
+	def calcStd(self):
+		logReturns = self.calcLogReturns()
+
+		return logReturns.std() * np.sqrt(len(logReturns))
+
 	def graphPrices(self):
 		closeDF, dates = self.getPrices(return_dates = True)
+		rollingMean = pd.DataFrame(closeDF).rolling(window = 25, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
+		volume = self.getVolume()
 
-		fig, ax = plt.subplots(1)
+		fig, (ax1, ax2) = plt.subplots(2, sharex = True, gridspec_kw = {'height_ratios': [4, 1]})
 		fig.autofmt_xdate()
-		plt.plot(dates, closeDF, color = 'blue', label = "Price")
-		plt.title(self.getQuote())
-		plt.xlabel("Date")
-		plt.ylabel("Price")
-		plt.legend(loc = 2)
 
+		ax1.plot(dates, closeDF, color = 'blue', linewidth = 1.8, label = "Price")
+		ax1.plot(dates, rollingMean, color = 'red', linewidth = 1.0, label = "Rolling Mean")
+
+		ax2.bar(dates, volume, width = 2, color = 'blue', label = "Volume")
+
+		plt.suptitle(str(self.getQuote()) + " Price movement and Volume", fontsize = 20)
+		ax1.set_ylabel("Price", fontsize = 12)
+		ax2.set_ylabel("Volume", fontsize = 12)
+		ax1.legend(loc = 2)
 		xfmt = mdates.DateFormatter('%Y-%m-%d')
-		ax.xaxis.set_major_formatter(xfmt)
-		ax.set_facecolor('tab:black')
+		ax1.xaxis.set_major_formatter(xfmt)
+
 		plt.show()

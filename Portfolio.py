@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 import matplotlib.pyplot as plt
 
 class Portfolio:
@@ -26,7 +27,7 @@ class Portfolio:
 
 		return ret, covMatrix
 
-	def calcMinVarPortfolio(self):
+	def calcMinVarAlloc(self):
 		ret, covMatrix = self.calcCovMatrix()
 
 		C_inv = np.linalg.inv(covMatrix.values)
@@ -77,7 +78,7 @@ class Portfolio:
 		return exRet, std
 
 	def graphEfficientFrontier(self):
-		self.calcMinVarPortfolio()
+		self.calcMinVarAlloc()
 		m, s = self.calcPerformance()
 
 		R = np.arange(m, 1.0, 0.01)
@@ -96,14 +97,12 @@ class Portfolio:
 		stockStd = []
 
 		for stock in self.getStocks():
-			ret = stock.calcLogReturns()
-
-			stockExpRet.append(ret.mean() * len(ret))
-			stockStd.append(ret.std() * np.sqrt(len(ret)))
+			stockExpRet.append(stock.calcExpReturn())
+			stockStd.append(stock.calcStd())
 
 
 		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
-		plt.scatter(stockStd, stockExpRet, s = 20, color = 'red', label = "Asset")
+		plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
 		plt.title("Efficient Frontier with indivitual assets")
