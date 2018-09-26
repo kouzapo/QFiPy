@@ -3,6 +3,7 @@ import pandas as pd
 from scipy import stats
 
 from Stock import *
+from Index import *
 from Portfolio import *
 
 def genRandomPortfolios(symbols, n):
@@ -23,35 +24,33 @@ def genRandomPortfolios(symbols, n):
 
 	return results
 
-def monteCarloCalculations(symbols, days):
-	price_dict = {}
+def simulateRandomWalk(N):
+	R = np.random.binomial(1, 0.5, N)
+	R = np.array([-1 if i == 0 else i for i in R])
+	R[0] = 0
 
-	for symbol in symbols:
-		close_df = pd.read_csv('hist_data/' + symbol + '.dat')['Adj Close']
-		last = close_df[len(close_df) - 1]
-		log_returns = np.log(close_df / close_df.shift(1))
+	return R.cumsum()
 
-		price_series = []
+def simulateWienerProcess(N):
+	dt = 1 / N
 
-		price = last * (1 + np.random.normal(0, log_returns.std()))
-		price_series.append(price)
+	for i in range(N):
+		dW = np.sqrt(dt) * np.random.normal(0, 1, N)
 
-		for i in range(days - 1):
-			price = price * (1 + np.random.normal(0, log_returns.std()))
-			price_series.append(price)
+	dW[0] = 0
+	return dW.cumsum()
 
-		price_dict[symbol] = price_series
+def simulatePrices(S0, std, rf, T, M, I):
+	dt = T / M
 
-	return pd.DataFrame(price_dict)
+	S = np.zeros((M + 1, I))
+	S[0] = S0
 
-def runSimulation(n, symbols):
-	futurePrices = []
+	for t in range(1, M + 1):
+		z = np.random.standard_normal(I)
+		S[t] = S[t - 1] * np.exp((rf - 0.5 * std ** 2) * dt + std * np.sqrt(dt) * z)
 
-	for i in range(n):
-		futurePrices.append(pd.DataFrame(monteCarloCalculations(symbols, 5)))
-		print(i)
-
-	return futurePrices
+	return S
 
 def main():
 	pass

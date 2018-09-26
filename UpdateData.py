@@ -4,7 +4,7 @@ import datetime as dt
 import pandas as pd
 import pandas_datareader.data as pdr
 
-from Utilities import openSymbolsFile, progressBar
+from Utilities import openSymbolsFile, getRiskFreeRate, progressBar
 
 def updateDataMenu():
 	while True:
@@ -23,15 +23,15 @@ def updateDataMenu():
 			start, end = getDates()
 
 			print("Downloading historical data...")
-
-			err = getHistoricalData(start, end)
+			getHistoricalData(start, end)
 
 			getIndexData('DJI', start, end)
 			getIndexData('IXIC', start, end)
 			getIndexData('GSPC', start, end)
+			getIndexData('GDAXI', start, end)
 
-			f = open('hist_data/' + end, 'w')
-			f.write(str(err))
+			f = open('hist_data/rf', 'w')
+			f.write(str(getRiskFreeRate()))
 			f.close
 			break
 
@@ -39,7 +39,6 @@ def updateDataMenu():
 			removeData('financial_statements/')
 
 			print("Downloading financial statements...")
-
 			getFinancialStatements()
 			break
 
@@ -47,15 +46,19 @@ def updateDataMenu():
 			removeData('hist_data/')
 			start, end = getDates()
 
+			print("Downloading historical data...")
 			getHistoricalData(start, end)
 
 			getIndexData('DJI', start, end)
 			getIndexData('IXIC', start, end)
 			getIndexData('GSPC', start, end)
+			getIndexData('GDAXI', start, end)
 
 			print()
 
 			removeData('financial_statements/')
+
+			print("Downloading financial statements...")
 			getFinancialStatements()
 			break
 
@@ -64,15 +67,14 @@ def updateDataMenu():
 
 def getDates():
 	end = str(dt.datetime.now().year) + '-' + str(dt.datetime.now().month) + '-' + str(dt.datetime.now().day)
-	start = dt.datetime.now() - dt.timedelta(days = 365)
+	start = dt.datetime.now() - dt.timedelta(days = 3 * 365)
 	start = str(start.year) + '-' + str(start.month) + '-' + str(start.day)
 
 	return start, end
 
 def getHistoricalData(start, end):
-	symbols = openSymbolsFile('GSPC')
+	symbols = openSymbolsFile('DJI')
 	l = len(symbols)
-	err = 0
 	i = 0
 
 	progressBar(0, l, prefix = 'Progress:', length = 50)
@@ -88,22 +90,16 @@ def getHistoricalData(start, end):
 				break
 
 			except Exception:
-				err += 1
-				#print("---ERROR---")
-
-	return err
+				print("---ERROR---")
 
 def getIndexData(index, start, end):
-	while True:
-		try:
-			histDF = pdr.DataReader('^' + index, 'yahoo', start, end)
-			histDF.to_csv('hist_data/' + index + '.dat')
-			#print(index)
-			break
+	try:
+		histDF = pdr.DataReader('^' + index, 'yahoo', start, end)
+		histDF.to_csv('hist_data/' + index + '.dat')
+		#print(index)
 
-		except Exception:
-			pass
-			#print("---ERROR---")
+	except Exception:
+		pass
 
 def getFinancialStatements():
 	symbols = openSymbolsFile('DJI')
@@ -124,9 +120,9 @@ def getFinancialStatements():
 
 		#print(sym)
 
-def removeData(dir):
-	for f in os.listdir(dir):
-		path = os.path.join(dir, f)
+def removeData(directory):
+	for f in os.listdir(directory):
+		path = os.path.join(directory, f)
 
 		if os.path.isfile(path):
 			os.remove(path)

@@ -1,6 +1,11 @@
 import numpy as np
 import pandas as pd
 
+from scipy.optimize import minimize
+
+from Stock import *
+from Utilities import getRiskFreeRate
+
 import matplotlib.pyplot as plt
 
 class Portfolio:
@@ -42,8 +47,7 @@ class Portfolio:
 
 	def calcMinVarLine(self, mv):
 		ret, covMatrix = self.calcCovMatrix()
-		days = len(ret)
-		m = ret.mean() * days
+		m = ret.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
 
@@ -68,20 +72,70 @@ class Portfolio:
 
 	def calcPerformance(self):
 		ret, covMatrix = self.calcCovMatrix()
-		days = len(ret)
 
 		weights = self.getStocksWeights()
 
-		exRet = np.dot(ret.mean(), weights) * days
-		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(days)
+		exRet = np.dot(ret.mean(), weights) * 252
+		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
 
 		return exRet, std
+
+	def calcSharpeRatio(self, rf):
+		exRet, std = self.calcPerformance()
+
+		return (exRet - rf) / std
+
+	def genRandomPortfolios(self, n):
+		results = []
+
+		for i in range(n):
+			weights = np.random.random(len(self.getStocks()))
+			weights /= np.sum(weights)
+
+			quotes = [s.getQuote() for s in self.getStocks()]
+			stocks = []
+			j = 0
+
+			for s in quotes:
+				stocks.append(Stock(s, weights[j]))
+				j += 1
+
+			results.append(Portfolio(stocks))
+
+		return results
+
+	def maximizeSharpeRatio(self, I):
+		P = self.genRandomPortfolios(I)
+
+		M = []
+		S = []
+		i = 0
+
+		for p in P:
+			m, s = p.calcPerformance()
+			print(i)
+
+			i += 1
+			M.append(m)
+			S.append(s)
+
+		M = np.array(M)
+		S = np.array(S)
+
+		minFunc = -(M - getRiskFreeRate()) / S
+		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+		bnds = tuple((0,1) for x in range(len(self.getStocks())))
+		w = len(self.getStocks()) * [1 / len(self.getStocks())]
+
+		opts = minimize(minFunc, w, method = 'SLSQP', bounds = bnds, constraints = cons)
+
+		print(opts)
 
 	def graphEfficientFrontier(self):
 		self.calcMinVarAlloc()
 		m, s = self.calcPerformance()
 
-		R = np.arange(m, 1.0, 0.01)
+		R = np.arange(m, 0.4, 0.01)
 
 		portExpRet = []
 		portStd = []
@@ -100,11 +154,36 @@ class Portfolio:
 			stockExpRet.append(stock.calcExpReturn())
 			stockStd.append(stock.calcStd())
 
-
 		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
 		plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
-		plt.title("Efficient Frontier with indivitual assets")
+		plt.title("Efficient Frontier with individual assets")
+		plt.legend(loc = 2)
+		plt.show()
+
+	def graphSimulatedEfficientFrontier(self, I):
+		P = self.genRandomPortfolios(I)
+
+		M = []
+		S = []
+		i = 0
+
+		for p in P:
+			m, s = p.calcPerformance()
+			print(i)
+
+			i += 1
+			M.append(m)
+			S.append(s)
+
+		M = np.array(M)
+		S = np.array(S)
+
+		plt.scatter(S, M, s = 12, c = (M - getRiskFreeRate()) / S, alpha = 1, label = "Portfolio")
+		plt.ylabel("Expected return")
+		plt.xlabel("Standard deviation")
+		plt.title("Simulated Efficient Frontier")
+		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
 		plt.show()

@@ -1,13 +1,17 @@
 import pickle
+import psutil
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 
 def getRiskFreeRate():
-	return float(np.array(pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1][9])[-1]) / 100
+	return round((float(np.array(pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1][9])[-1]) / 100), 4)
 
 def writeToSer(obj, fileName):
 	outFile = open(fileName, 'wb')
 	pickle.dump(obj, outFile)
+
 	outFile.close()
 
 def readFromSer(fileName):
@@ -44,6 +48,9 @@ def openSymbolsFile(index):
 	f.close()
 
 	return symbols
+
+def getTime():
+	return dt.datetime.now().strftime("%H:%M:%S")
 
 def progressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))

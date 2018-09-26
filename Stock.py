@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+from scipy import stats
+
+from bs4 import BeautifulSoup
+import urllib3
 
 from sklearn.linear_model import LinearRegression
 
@@ -10,8 +14,10 @@ from matplotlib import style
 style.use('ggplot')
 
 class Stock:
-
 	def __init__(self, quote, weight = 0):
+		self.http = urllib3.PoolManager()
+		urllib3.disable_warnings()
+
 		self.quote = quote
 		self.weight = weight
 
@@ -24,14 +30,18 @@ class Stock:
 	def setWeight(self, weight):
 		self.weight = weight
 
-	def getBeta(self):
-		return self.beta
-
 	def getIncomeStatement(self):
 		return pd.read_csv('financial_statements/inc_' + self.quote + '.dat')
 
 	def getBalanceSheet(self):
 		return pd.read_csv('financial_statements/bal_' + self.quote + '.dat')
+
+	def getCurrentPrice(self):
+		S = self.http.request('GET', 'https://finance.yahoo.com/quote/' + self.quote + '?p=' + self.quote)
+		soup = BeautifulSoup(S.data, 'lxml')
+		J = soup.find('span', class_ = 'Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)')
+
+		return float(J.text.replace(',', ''))
 
 	def getEPS(self):
 		return float(pd.read_html('https://finance.yahoo.com/quote/' + self.quote + '?p=' + self.quote)[1][1][3])
@@ -75,12 +85,12 @@ class Stock:
 	def calcExpReturn(self):
 		logReturns = self.calcLogReturns()
 
-		return logReturns.mean() * len(logReturns)
+		return logReturns.mean() * 252#len(logReturns)
 
 	def calcStd(self):
 		logReturns = self.calcLogReturns()
 
-		return logReturns.std() * np.sqrt(len(logReturns))
+		return logReturns.std() * np.sqrt(252)#np.sqrt(len(logReturns))
 
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
@@ -98,9 +108,15 @@ class Stock:
 		#print(regressor.coef_[0][0], regressor.intercept_[0])
 		return regressor.coef_[0][0], regressor.intercept_[0]
 
+	def calcSharpeRatio(self, rf):
+		return (self.calcExpReturn() - rf) / self.calcStd()
+
+	def normalTest(self):
+		return stats.normaltest(self.calcLogReturns())[1]
+
 	def graphPrices(self):
 		closeDF, dates = self.getPrices(return_dates = True)
-		rollingMean = pd.DataFrame(closeDF).rolling(window = 25, min_periods = 0).mean()
+		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
 		volume = self.getVolume()
 
@@ -112,7 +128,7 @@ class Stock:
 
 		ax2.bar(dates, volume, width = 2, color = 'blue', label = "Volume")
 
-		plt.suptitle(str(self.getQuote()) + " Price movement and Volume", fontsize = 20)
+		plt.suptitle(str(self.getQuote()) + " price movement and Volume", fontsize = 20)
 		ax1.set_ylabel("Price", fontsize = 12)
 		ax2.set_ylabel("Volume", fontsize = 12)
 		ax1.legend(loc = 2)
@@ -126,7 +142,7 @@ class Stock:
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
-		ax1.plot(logReturns, color = 'blue')
+		ax1.plot(logReturns, color = 'blue', lw = 0.5)
 		ax2.hist(logReturns, bins = 35, color = 'blue')
 
 		ax1.set_ylabel("% Change", fontsize = 12)
