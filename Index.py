@@ -89,8 +89,8 @@ class Index:
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
-		ax1.plot(logReturns, color = 'blue', lw = 0.5)
-		ax2.hist(logReturns, bins = 35, color = 'blue')
+		ax1.plot(logReturns, color = 'blue', lw = 0.4)
+		ax2.hist(logReturns, bins = 40, color = 'blue')
 
 		ax1.set_ylabel("% Change", fontsize = 12)
 

@@ -6,18 +6,33 @@ import numpy as np
 import pandas as pd
 
 def getRiskFreeRate():
-	return round((float(np.array(pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1][9])[-1]) / 100), 4)
+	RF = {}
+	D = pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1]
+
+	RF['1M'] = round(float(np.array(D[1])[-1]) / 100, 4)
+	RF['3M'] = round(float(np.array(D[2])[-1]) / 100, 4)
+	RF['6M'] = round(float(np.array(D[3])[-1]) / 100, 4)
+	RF['1Y'] = round(float(np.array(D[4])[-1]) / 100, 4)
+	RF['2Y'] = round(float(np.array(D[5])[-1]) / 100, 4)
+	RF['3Y'] = round(float(np.array(D[6])[-1]) / 100, 4)
+	RF['5Y'] = round(float(np.array(D[7])[-1]) / 100, 4)
+	RF['7Y'] = round(float(np.array(D[8])[-1]) / 100, 4)
+	RF['10Y'] = round(float(np.array(D[9])[-1]) / 100, 4)
+	RF['20Y'] = round(float(np.array(D[10])[-1]) / 100, 4)
+	RF['30Y'] = round(float(np.array(D[11])[-1]) / 100, 4)
+
+	return RF
+
+def readFromSer(fileName):
+	inFile = open(fileName, 'rb')
+
+	return pickle.load(inFile)
 
 def writeToSer(obj, fileName):
 	outFile = open(fileName, 'wb')
 	pickle.dump(obj, outFile)
 
 	outFile.close()
-
-def readFromSer(fileName):
-	inFile = open(fileName, 'rb')
-
-	return pickle.load(inFile)
 
 def getDJISymbols():
 	f = open('DJI_symbols.dat', 'w')
@@ -34,6 +49,15 @@ def getGSPCSymbols():
 
 	for symbol in SPX_list[0][0][1:]:
 		f.write(symbol + '\n')
+
+	f.close()
+
+def getGDAXISymbols():
+	f = open('GDAXI_symbols.dat', 'w')
+	GDAXI_list = pd.read_html('https://en.wikipedia.org/wiki/DAX')
+
+	for symbol in GDAXI_list[2][3][1:]:
+		f.write(symbol + '.DE\n')
 
 	f.close()
 

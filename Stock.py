@@ -43,12 +43,6 @@ class Stock:
 
 		return float(J.text.replace(',', ''))
 
-	def getEPS(self):
-		return float(pd.read_html('https://finance.yahoo.com/quote/' + self.quote + '?p=' + self.quote)[1][1][3])
-
-	def getPE(self):
-		return float(pd.read_html('https://finance.yahoo.com/quote/' + self.quote + '?p=' + self.quote)[1][1][2])
-
 	def calcIndicators(self):
 		income_statement = self.getIncomeStatement()
 		balance_sheet = self.getBalanceSheet()
@@ -82,15 +76,21 @@ class Stock:
 
 		return np.array(logReturns)
 
-	def calcExpReturn(self):
+	def calcExpReturn(self, annualized = True):
 		logReturns = self.calcLogReturns()
 
-		return logReturns.mean() * 252#len(logReturns)
+		if annualized:
+			return logReturns.mean() * 252
+		else:
+			return logReturns.mean()
 
-	def calcStd(self):
+	def calcStd(self, annualized = True):
 		logReturns = self.calcLogReturns()
 
-		return logReturns.std() * np.sqrt(252)#np.sqrt(len(logReturns))
+		if annualized:
+			return logReturns.std() * np.sqrt(252)
+		else:
+			return logReturns.std()
 
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
@@ -106,10 +106,17 @@ class Stock:
 		regressor.fit(benchmarkReturns, stockReturns)
 
 		#print(regressor.coef_[0][0], regressor.intercept_[0])
-		return regressor.coef_[0][0], regressor.intercept_[0]
+		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0]}
 
 	def calcSharpeRatio(self, rf):
 		return (self.calcExpReturn() - rf) / self.calcStd()
+
+	def calcVaR(self, c = 0.95):
+		logReturns = self.calcLogReturns()
+		logReturns.sort()
+		a = round(len(logReturns) * (1 - c))
+
+		return {'VaR': logReturns[a - 1], 'CVaR': logReturns[0:a - 1].mean()}
 
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]
@@ -142,8 +149,8 @@ class Stock:
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
-		ax1.plot(logReturns, color = 'blue', lw = 0.5)
-		ax2.hist(logReturns, bins = 35, color = 'blue')
+		ax1.plot(logReturns, color = 'blue', lw = 0.4)
+		ax2.hist(logReturns, bins = 40, color = 'blue')
 
 		ax1.set_ylabel("% Change", fontsize = 12)
 
@@ -156,13 +163,14 @@ class Stock:
 	def graphCorrelation(self, benchmark):
 		stockReturns = self.calcLogReturns()
 		benchmarkReturns = benchmark.calcLogReturns()
-		beta, inter = self.calcBeta(benchmark)
+		B = self.calcBeta(benchmark)
 		corrcoef = self.calcCorrCoef(benchmark)
 
 		plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.6, label = "Returns")
-		plt.plot(benchmarkReturns, beta * benchmarkReturns + inter, color = 'red', linewidth = 2, label = "Fitting line")
+		plt.plot(benchmarkReturns, B['beta'] * benchmarkReturns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")
 		plt.ylabel(self.quote + " Log Returns", fontsize = 12)
 		plt.xlabel(benchmark.getQuote() + " Log Returns", fontsize = 15)
 		plt.legend(loc = 2)
-		plt.title(self.quote + " aganinst " + benchmark.getQuote() + " Log returns," + " ρ = " + str(round(corrcoef, 3)) + ", β = " + str(round(beta, 3)), fontsize = 18)
+		plt.title(self.quote + " aganinst " + benchmark.getQuote() + " Log returns," + " ρ = " + str(round(corrcoef, 3)) + ", β = " + str(round(B['beta'], 3)), fontsize = 18)
+
 		plt.show()

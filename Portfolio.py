@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.optimize import minimize
 
 from Stock import *
+from Index import *
 from Utilities import getRiskFreeRate
 
 import matplotlib.pyplot as plt
@@ -32,7 +33,7 @@ class Portfolio:
 
 		return ret, covMatrix
 
-	def calcMinVarAlloc(self):
+	def calcMinVarAlloc(self, save = True):
 		ret, covMatrix = self.calcCovMatrix()
 
 		C_inv = np.linalg.inv(covMatrix.values)
@@ -41,11 +42,14 @@ class Portfolio:
 		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
 		i = 0
 
-		for stock in self.getStocks():
-			stock.setWeight(weights[i])
-			i += 1
+		if save:
+			for stock in self.getStocks():
+				stock.setWeight(weights[i])
+				i += 1
 
-	def calcMinVarLine(self, mv):
+		return weights
+
+	def calcMinVarLine(self, mv, save = True):
 		ret, covMatrix = self.calcCovMatrix()
 		m = ret.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
@@ -66,24 +70,52 @@ class Portfolio:
 		weights = (A * eC_inv + B * mC_inv) / C
 		i = 0
 
-		for stock in self.getStocks():
-			stock.setWeight(weights[i])
-			i += 1
+		if save:
+			for stock in self.getStocks():
+				stock.setWeight(weights[i])
+				i += 1
 
-	def calcPerformance(self):
+		return weights
+
+	def calcPerformance(self, rf):
+		benchmark = Index('^GSPC')
 		ret, covMatrix = self.calcCovMatrix()
-
 		weights = self.getStocksWeights()
+		stocksBetas = np.array([s.calcBeta(benchmark)['beta'] for s in self.getStocks()])
 
 		exRet = np.dot(ret.mean(), weights) * 252
 		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
+		sharpeRatio = (exRet - rf) / std
+		beta = stocksBetas.dot(weights)
 
-		return exRet, std
+		res = {'return': round(exRet, 5), 'std': round(std, 5), 'sharpe': round(sharpeRatio, 5), 'beta': round(beta, 5)}
 
-	def calcSharpeRatio(self, rf):
-		exRet, std = self.calcPerformance()
+		return res
 
-		return (exRet - rf) / std
+	def maximizeSharpeRatio(self, rf, save = True):
+		n = len(self.getStocks())
+		rets, cov = self.calcCovMatrix()
+
+		def minFunc(weights):
+			weights = np.array(weights)
+			pret = np.sum(rets.mean() * weights) * 252
+			pvol = np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+
+			return -((pret - rf) / pvol)
+
+		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+		bnds = tuple((0, 1) for x in range(n))
+
+		res = minimize(minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		weights = res.get('x')
+		i = 0
+
+		if save:
+			for stock in self.getStocks():
+				stock.setWeight(weights[i])
+				i += 1
+
+		return weights
 
 	def genRandomPortfolios(self, n):
 		results = []
@@ -104,45 +136,26 @@ class Portfolio:
 
 		return results
 
-	def maximizeSharpeRatio(self, I):
-		P = self.genRandomPortfolios(I)
-
-		M = []
-		S = []
-		i = 0
-
-		for p in P:
-			m, s = p.calcPerformance()
-			print(i)
-
-			i += 1
-			M.append(m)
-			S.append(s)
-
-		M = np.array(M)
-		S = np.array(S)
-
-		minFunc = -(M - getRiskFreeRate()) / S
-		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-		bnds = tuple((0,1) for x in range(len(self.getStocks())))
-		w = len(self.getStocks()) * [1 / len(self.getStocks())]
-
-		opts = minimize(minFunc, w, method = 'SLSQP', bounds = bnds, constraints = cons)
-
-		print(opts)
-
 	def graphEfficientFrontier(self):
-		self.calcMinVarAlloc()
-		m, s = self.calcPerformance()
+		rf = getRiskFreeRate()
 
-		R = np.arange(m, 0.4, 0.01)
+		self.calcMinVarAlloc()
+		res = self.calcPerformance(rf)
+		minM = res['return']
+		minS = res['std']
+
+		self.maximizeSharpeRatio(rf)
+
+		R = np.arange(0, 0.4, 0.01)
 
 		portExpRet = []
 		portStd = []
 
 		for i in R:
 			self.calcMinVarLine(i)
-			m, s = self.calcPerformance()
+			res = self.calcPerformance(rf)
+			m = res['return']
+			s = res['std']
 
 			portExpRet.append(m)
 			portStd.append(s)
@@ -156,21 +169,27 @@ class Portfolio:
 
 		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
 		plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
+		plt.scatter(minS, minM, s = 350, color = 'green', marker = '*', label = "Minimum Variance Protfolio")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
 		plt.title("Efficient Frontier with individual assets")
 		plt.legend(loc = 2)
 		plt.show()
 
-	def graphSimulatedEfficientFrontier(self, I):
+		return portExpRet, portStd
+
+	def graphSimulatedRandomProtfolios(self, I):
 		P = self.genRandomPortfolios(I)
+		rf = getRiskFreeRate()
 
 		M = []
 		S = []
 		i = 0
 
 		for p in P:
-			m, s = p.calcPerformance()
+			res = p.calcPerformance(rf)
+			m = res['return']
+			s = res['std']
 			print(i)
 
 			i += 1
@@ -183,7 +202,7 @@ class Portfolio:
 		plt.scatter(S, M, s = 12, c = (M - getRiskFreeRate()) / S, alpha = 1, label = "Portfolio")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
-		plt.title("Simulated Efficient Frontier")
+		plt.title("Simulated Random Portfolios")
 		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
 		plt.show()
