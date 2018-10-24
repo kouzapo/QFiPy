@@ -22,6 +22,7 @@ def getRiskFreeRate():
 	RF: dict
 		A dict object of risk free rates.
 	"""
+
 	RF = {}
 	D = pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1]
 
@@ -51,6 +52,7 @@ def writeToSer(obj, fileName):
 	fileName: str
 		The name of the serialized object.
 	"""
+
 	outFile = open(fileName, 'wb')
 	dill.dump(obj, outFile)
 
@@ -70,12 +72,17 @@ def readFromSer(fileName):
 	obj: Object
 		The object contained in the serialized file.
 	"""
+
 	inFile = open(fileName, 'rb')
 	obj = dill.load(inFile)
 
 	return obj
 
 def getDJISymbols():
+	"""
+	Downloads the symbols of the Dow Jones stocks and saves them in a .dat file.
+	"""
+
 	f = open('DJI_symbols.dat', 'w')
 	DJIA_list = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
 
@@ -85,6 +92,10 @@ def getDJISymbols():
 	f.close()
 
 def getGSPCSymbols():
+	"""
+	Downloads the symbols of the S&P500 stocks and saves them in a .dat file.
+	"""
+
 	f = open('GSPC_symbols.dat', 'w')
 	GSPC_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
 
@@ -94,6 +105,10 @@ def getGSPCSymbols():
 	f.close()
 
 def getGDAXISymbols():
+	"""
+	Downloads the symbols of the DAX stocks and saves them in a .dat file.
+	"""
+
 	f = open('GDAXI_symbols.dat', 'w')
 	GDAXI_list = pd.read_html('https://en.wikipedia.org/wiki/DAX')
 
@@ -103,6 +118,20 @@ def getGDAXISymbols():
 	f.close()
 
 def openSymbolsFile(index):
+	"""
+	Opens a text file which contains the stock symbols of a given index and returns a list of them.
+
+	Parameters
+	----------
+	index: str
+		The symbol of the index.
+
+	Returns
+	-------
+	symbols: list
+		A list of the symbols of the given index.
+	"""
+
 	f = open(index + '_symbols.dat', 'r')
 	symbols = [symbol.strip() for symbol in f]
 
@@ -111,6 +140,20 @@ def openSymbolsFile(index):
 	return symbols
 
 def openSectorFile(sector):
+	"""
+	Opens a text file which contains the symbols of stocks belonging in a given sector and returns a list of them.
+
+	Parameters
+	----------
+	index: str
+		The sector file name.
+
+	Returns
+	-------
+	symbols: list
+		A list of the symbols of the given sector.
+	"""
+
 	f = open('GSPC_sectors\\' + sector + '.dat', 'r')
 	symbols = [symbol.strip() for symbol in f]
 
@@ -119,7 +162,18 @@ def openSectorFile(sector):
 	return symbols
 
 def getTime():
-	return dt.datetime.now().strftime("%H:%M:%S")
+	"""
+	Returns the current time in a HH:MM:SS format.
+
+	Returns
+	-------
+	currTime: str
+		The current time.
+	"""
+
+	currTime = dt.datetime.now().strftime("%H:%M:%S")
+
+	return currTime
 
 def progressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
