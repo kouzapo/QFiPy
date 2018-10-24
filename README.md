@@ -1,2 +1,2 @@
 # portfolio-management
-Optimization &amp; Risk Management Software
+Financial market modeling & Portfolio optimization 
