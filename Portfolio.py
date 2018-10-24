@@ -1,13 +1,18 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
 
 from scipy.optimize import minimize
 
+import matplotlib.pyplot as plt
+from matplotlib import style
+
 from Stock import *
 from Index import *
-from Utilities import getRiskFreeRate
+from utilities import getRiskFreeRate
 
-import matplotlib.pyplot as plt
+style.use('ggplot')
 
 class Portfolio:
 	def __init__(self, stocks):
@@ -96,7 +101,7 @@ class Portfolio:
 		n = len(self.getStocks())
 		rets, cov = self.calcCovMatrix()
 
-		def minFunc(weights):
+		def _minFunc(weights):
 			weights = np.array(weights)
 			pret = np.sum(rets.mean() * weights) * 252
 			pvol = np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
@@ -106,7 +111,7 @@ class Portfolio:
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
 		bnds = tuple((0, 1) for x in range(n))
 
-		res = minimize(minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		res = minimize(_minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
 		weights = res.get('x')
 		i = 0
 

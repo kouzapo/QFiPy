@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -13,6 +14,9 @@ style.use('ggplot')
 
 class Index:
 	def __init__(self, quote):
+		self.http = urllib3.PoolManager()
+		urllib3.disable_warnings()
+
 		self.quote = quote
 
 	def getQuote(self):
@@ -22,7 +26,7 @@ class Index:
 		http = urllib3.PoolManager()
 		urllib3.disable_warnings()
 
-		S = http.request('GET', 'https://finance.yahoo.com/quote/^' + self.quote + '?p=^' + self.quote)
+		S = http.request('GET', 'https://finance.yahoo.com/quote/' + self.quote + '?p=^' + self.quote)
 		soup = BeautifulSoup(S.data, 'lxml')
 		J = soup.find('span', class_ = 'Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)')
 
@@ -49,14 +53,10 @@ class Index:
 		return np.array(logReturns)
 
 	def calcExpReturn(self):
-		logReturns = self.calcLogReturns()
-
-		return logReturns.mean() * 252#len(logReturns)
+		return self.calcLogReturns().mean() * 252
 
 	def calcStd(self):
-		logReturns = self.calcLogReturns()
-
-		return logReturns.std() * np.sqrt(252)#np.sqrt(len(logReturns))
+		return self.calcLogReturns().std() * np.sqrt(252)
 
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]

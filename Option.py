@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-from Utilities import getRiskFreeRate
+from utilities import getRiskFreeRate
 
 class Option:
 	def __init__(self, stock):
@@ -14,12 +16,10 @@ class Option:
 	def calcCallPrice(self, K, T):
 		S0 = self.stock.getCurrentPrice()
 		s = self.stock.calcStd()
-		rf = getRiskFreeRate()
+		rf = getRiskFreeRate()['10Y']
 
 		d1 = (np.log(S0 / K) + (rf + 0.5 * s ** 2) * T) /(s * np.sqrt(T))
 		d2 = (np.log(S0 / K) + (rf - 0.5 * s ** 2) * T) /(s * np.sqrt(T))
-
-		#C0 = np.exp(-r * T) * np.sum(np.maximum(S[-1] - K, 0)) / I
 
 		return (S0 * stats.norm.cdf(d1, 0, 1) - K * np.exp(-rf * T) * stats.norm.cdf(d2, 0, 1))
 

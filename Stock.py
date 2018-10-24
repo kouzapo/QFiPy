@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -104,9 +106,9 @@ class Stock:
 
 		regressor = LinearRegression()
 		regressor.fit(benchmarkReturns, stockReturns)
+		R_sq = regressor.score(benchmarkReturns, stockReturns)
 
-		#print(regressor.coef_[0][0], regressor.intercept_[0])
-		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0]}
+		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0], 'R-squared': R_sq}
 
 	def calcSharpeRatio(self, rf):
 		return (self.calcExpReturn() - rf) / self.calcStd()
@@ -166,8 +168,9 @@ class Stock:
 		B = self.calcBeta(benchmark)
 		corrcoef = self.calcCorrCoef(benchmark)
 
-		plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.6, label = "Returns")
+		plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.5, label = "Returns")
 		plt.plot(benchmarkReturns, B['beta'] * benchmarkReturns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")
+
 		plt.ylabel(self.quote + " Log Returns", fontsize = 12)
 		plt.xlabel(benchmark.getQuote() + " Log Returns", fontsize = 15)
 		plt.legend(loc = 2)
