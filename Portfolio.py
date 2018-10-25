@@ -27,7 +27,7 @@ class Portfolio:
 	def getStocksWeights(self):
 		return np.array([stock.getWeight() for stock in self.getStocks()])
 
-	def calcCovMatrix(self):
+	def _calcCovMatrix(self):
 		ret = {}
 
 		for stock in self.getStocks():
@@ -39,7 +39,7 @@ class Portfolio:
 		return ret, covMatrix
 
 	def calcMinVarAlloc(self, save = True):
-		ret, covMatrix = self.calcCovMatrix()
+		ret, covMatrix = self._calcCovMatrix()
 
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
@@ -55,7 +55,7 @@ class Portfolio:
 		return weights
 
 	def calcMinVarLine(self, mv, save = True):
-		ret, covMatrix = self.calcCovMatrix()
+		ret, covMatrix = self._calcCovMatrix()
 		m = ret.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
@@ -84,7 +84,7 @@ class Portfolio:
 
 	def calcPerformance(self, rf):
 		benchmark = Index('^GSPC')
-		ret, covMatrix = self.calcCovMatrix()
+		ret, covMatrix = self._calcCovMatrix()
 		weights = self.getStocksWeights()
 		stocksBetas = np.array([s.calcBeta(benchmark)['beta'] for s in self.getStocks()])
 
@@ -99,7 +99,7 @@ class Portfolio:
 
 	def maximizeSharpeRatio(self, rf, save = True):
 		n = len(self.getStocks())
-		rets, cov = self.calcCovMatrix()
+		rets, cov = self._calcCovMatrix()
 
 		def _minFunc(weights):
 			weights = np.array(weights)
@@ -142,12 +142,10 @@ class Portfolio:
 		return results
 
 	def graphEfficientFrontier(self):
-		rf = getRiskFreeRate()
+		rf = getRiskFreeRate()['10Y']
 
 		self.calcMinVarAlloc()
 		res = self.calcPerformance(rf)
-		minM = res['return']
-		minS = res['std']
 
 		self.maximizeSharpeRatio(rf)
 
@@ -174,7 +172,6 @@ class Portfolio:
 
 		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
 		plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
-		plt.scatter(minS, minM, s = 350, color = 'green', marker = '*', label = "Minimum Variance Protfolio")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
 		plt.title("Efficient Frontier with individual assets")
