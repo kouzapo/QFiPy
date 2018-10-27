@@ -10,7 +10,7 @@ from matplotlib import style
 
 from Stock import *
 from Index import *
-from utilities import getRiskFreeRate
+from fixed_income import getRiskFreeRate
 
 style.use('ggplot')
 

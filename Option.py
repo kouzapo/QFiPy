@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from utilities import getRiskFreeRate
+from fixed_income import getRiskFreeRate
 
 class Option:
 	def __init__(self, stock):

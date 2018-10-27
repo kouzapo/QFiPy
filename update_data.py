@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import time
 import datetime as dt
 import threading as thrd
@@ -33,7 +34,7 @@ class DataUpdater:
 	def __init__(self):
 		pass
 
-	def _getDates(self, years):
+	def __getDates(self, years):
 		end = str(dt.datetime.now().year) + '-' + str(dt.datetime.now().month) + '-' + str(dt.datetime.now().day)
 		start = dt.datetime.now() - dt.timedelta(days = years * 365)
 		start = str(start.year) + '-' + str(start.month) + '-' + str(start.day)
@@ -42,14 +43,14 @@ class DataUpdater:
 
 		return Dates
 
-	def _removeData(self, directory):
+	def __removeData(self, directory):
 		for f in os.listdir(directory):
 			path = os.path.join(directory, f)
 
 			if os.path.isfile(path):
 				os.remove(path)
 
-	def _getStockData(self, symList, start, end):
+	def __getStockData(self, symList, start, end):
 		for sym in symList:
 			try:
 				histDF = pdr.DataReader(sym, 'yahoo', start, end)
@@ -60,9 +61,9 @@ class DataUpdater:
 
 	def runStockDataUpdate(self, index, remove = True):
 		if remove:
-			self._removeData('hist_data/')
+			self.__removeData('hist_data/')
 
-		Dates = self._getDates(5)
+		Dates = self.__getDates(5)
 		start = Dates['start']
 		end = Dates['end']
 
@@ -80,8 +81,8 @@ class DataUpdater:
 		S5 = stockSymbols[I[4]:]
 
 		S = [S1, S2, S3, S4, S5]
-		T = [thrd.Thread(target = self._getStockData, args = (s, start, end)) for s in S]
-		T.append(thrd.Thread(target = self._getStockData, args = (indicesSymbols, start, end)))
+		T = [thrd.Thread(target = self.__getStockData, args = (s, start, end)) for s in S]
+		T.append(thrd.Thread(target = self.__getStockData, args = (indicesSymbols, start, end)))
 
 		print("Downloading historical data...")
 
@@ -104,6 +105,10 @@ class DataUpdater:
 
 def main():
 	os.system('cls')
+
+	'''indexQuote = sys.argv[1]
+	DataUpdater().runStockDataUpdate(indexQuote)'''
+
 	DataUpdater().runStockDataUpdate('GSPC')
 
 if __name__ == '__main__':
