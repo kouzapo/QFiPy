@@ -82,18 +82,22 @@ class Portfolio:
 
 		return weights
 
-	def calcPerformance(self, rf):
+	def calcPerformance(self, rf, full = True):
 		benchmark = Index('^GSPC')
 		ret, covMatrix = self._calcCovMatrix()
 		weights = self.getStocksWeights()
-		stocksBetas = np.array([s.calcBeta(benchmark)['beta'] for s in self.getStocks()])
 
 		exRet = np.dot(ret.mean(), weights) * 252
 		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
-		sharpeRatio = (exRet - rf) / std
-		beta = stocksBetas.dot(weights)
 
-		res = {'return': round(exRet, 5), 'std': round(std, 5), 'sharpe': round(sharpeRatio, 5), 'beta': round(beta, 5)}
+		if full:
+			sharpeRatio = (exRet - rf) / std
+			stocksBetas = np.array([s.calcBeta(benchmark)['beta'] for s in self.getStocks()])
+			beta = stocksBetas.dot(weights)
+
+			res = {'return': round(exRet, 5), 'std': round(std, 5), 'sharpe': round(sharpeRatio, 5), 'beta': round(beta, 5)}
+		else:
+			res = {'return': round(exRet, 5), 'std': round(std, 5)}
 
 		return res
 
@@ -122,7 +126,7 @@ class Portfolio:
 
 		return weights
 
-	def genRandomPortfolios(self, n):
+	def __genRandomPortfolios(self, n):
 		results = []
 
 		for i in range(n):
@@ -181,15 +185,15 @@ class Portfolio:
 		return portExpRet, portStd
 
 	def graphSimulatedRandomProtfolios(self, I):
-		P = self.genRandomPortfolios(I)
-		rf = getRiskFreeRate()
+		P = self.__genRandomPortfolios(I)
+		rf = getRiskFreeRate()['10Y']
 
 		M = []
 		S = []
 		i = 0
 
 		for p in P:
-			res = p.calcPerformance(rf)
+			res = p.calcPerformance(rf, full = False)
 			m = res['return']
 			s = res['std']
 			print(i)
@@ -201,7 +205,7 @@ class Portfolio:
 		M = np.array(M)
 		S = np.array(S)
 
-		plt.scatter(S, M, s = 12, c = (M - getRiskFreeRate()) / S, alpha = 1, label = "Portfolio")
+		plt.scatter(S, M, s = 12, c = (M - rf) / S, alpha = 1, label = "Portfolio")
 		plt.ylabel("Expected return")
 		plt.xlabel("Standard deviation")
 		plt.title("Simulated Random Portfolios")
