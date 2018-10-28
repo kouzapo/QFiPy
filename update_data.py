@@ -7,28 +7,10 @@ import datetime as dt
 import threading as thrd
 
 import numpy as np
+import pandas as pd
 import pandas_datareader.data as pdr
 
 from utilities import openSymbolsFile, progressBar
-
-'''def _getFinancialStatements():
-	symbols = openSymbolsFile('GSPC')
-	l = len(symbols)
-	i = 0
-
-	progressBar(0, l, prefix = 'Progress:', length = 50)
-
-	for sym in symbols:
-		income_statement = pd.read_html('https://finance.yahoo.com/quote/' + sym + '/financials?p=' + sym)[0][1]
-		balance_sheet = pd.DataFrame(pd.read_html('https://finance.yahoo.com/quote/' + sym + '/balance-sheet?p=' + sym)[0][1])
-
-		income_statement.to_csv('financial_statements/inc_' + sym + '.dat', index = False)
-		balance_sheet.to_csv('financial_statements/bal_' + sym + '.dat', index = False)
-
-		i += 1
-		progressBar(i, l, prefix = 'Progress:', length = 50)
-
-		#print(sym)'''
 
 class DataUpdater:
 	def __init__(self):
@@ -55,6 +37,18 @@ class DataUpdater:
 			try:
 				histDF = pdr.DataReader(sym, 'yahoo', start, end)
 				histDF.to_csv('hist_data/' + sym + '.dat')
+
+			except Exception:
+				pass
+
+	def __getFinancialStatements(self, symList):
+		for sym in symList:
+			try:
+				income_statement = pd.read_html('https://finance.yahoo.com/quote/' + sym + '/financials?p=' + sym)[0][1]
+				balance_sheet = pd.DataFrame(pd.read_html('https://finance.yahoo.com/quote/' + sym + '/balance-sheet?p=' + sym)[0][1])
+
+				income_statement.to_csv('financial_statements/inc_' + sym + '.dat', index = False)
+				balance_sheet.to_csv('financial_statements/bal_' + sym + '.dat', index = False)
 
 			except Exception:
 				pass
@@ -103,13 +97,53 @@ class DataUpdater:
 		print()
 		print("Complete.")
 
+	def runFinancialStatementsUpdate(self, index, remove = True):
+		if remove:
+			self.__removeData('financial_statements/')
+
+		stockSymbols = openSymbolsFile(index)
+
+		l = len(stockSymbols)
+		I = np.arange(0, l, l / 5)
+		I = np.array([int(i) for i in I])
+
+		S1 = stockSymbols[I[0]:I[1]]
+		S2 = stockSymbols[I[1]:I[2]]
+		S3 = stockSymbols[I[2]:I[3]]
+		S4 = stockSymbols[I[3]:I[4]]
+		S5 = stockSymbols[I[4]:]
+
+		S = [S1, S2, S3, S4, S5]
+		T = [thrd.Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
+
+		print("Downloading financial statements...")
+
+		for t in T:
+			t.start()
+
+		'''for t in T:
+			t.join()'''
+
+		l *= 2
+
+		while len(os.listdir('financial_statements')) != l:
+			progressBar(len(os.listdir('financial_statements')), l, prefix = 'Progress:', length = 50)
+			time.sleep(0.5)
+
+		progressBar(l, l, prefix = 'Progress:', length = 50)
+		print()
+		print("Complete.")
+
 def main():
 	os.system('cls')
+
+	d1 = DataUpdater()
 
 	'''indexQuote = sys.argv[1]
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
-	DataUpdater().runStockDataUpdate('GSPC')
+	d1.runStockDataUpdate('DJI')
+	d1.runFinancialStatementsUpdate('DJI')
 
 if __name__ == '__main__':
 	main()
