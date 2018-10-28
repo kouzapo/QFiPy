@@ -7,6 +7,7 @@ pip install -U pandas-datareader
 pip install -U matplotlib
 pip install -U scikit-learn
 pip install -U bs4
+pip install -U lxml
 pip install -U urllib3
 pip install -U dill
 pip install -U psutil
