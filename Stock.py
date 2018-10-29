@@ -7,7 +7,9 @@ from scipy import stats
 from bs4 import BeautifulSoup
 import urllib3
 
+from sklearn import preprocessing
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -122,6 +124,28 @@ class Stock:
 
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]
+
+	def predictPrices(self, days):
+		df = pd.DataFrame(self.getPrices(), columns = [['Close']])
+		df['Prediction'] = df[['Close']].shift(-days)
+
+		X = np.array(df.drop(['Prediction'], 1))
+		X = preprocessing.scale(X)
+
+		X_forecast = X[-days:]
+		X = X[:-days]
+
+		y = np.array(df['Prediction'])
+		y = y[:-days]
+
+		X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
+
+		regressor = LinearRegression()
+		regressor.fit(X_train, y_train)
+
+		predictions = regressor.predict(X_forecast)
+
+		return predictions
 
 	def graphPrices(self):
 		closeDF, dates = self.getPrices(return_dates = True)
