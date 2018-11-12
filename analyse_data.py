@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import time
@@ -12,6 +13,8 @@ from Portfolio import *
 from update_data import *
 
 st = time.time()
+
+
 
 
 

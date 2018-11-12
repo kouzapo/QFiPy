@@ -99,7 +99,7 @@ class Stock:
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
 
-	def calcBeta(self, benchmark):
+	def calcBetaAlpha(self, benchmark):
 		stockReturns = self.calcLogReturns()
 		benchmarkReturns = benchmark.calcLogReturns()
 
@@ -124,28 +124,6 @@ class Stock:
 
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]
-
-	def predictPrices(self, days):
-		df = pd.DataFrame(self.getPrices(), columns = [['Close']])
-		df['Prediction'] = df[['Close']].shift(-days)
-
-		X = np.array(df.drop(['Prediction'], 1))
-		X = preprocessing.scale(X)
-
-		X_forecast = X[-days:]
-		X = X[:-days]
-
-		y = np.array(df['Prediction'])
-		y = y[:-days]
-
-		X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
-
-		regressor = LinearRegression()
-		regressor.fit(X_train, y_train)
-
-		predictions = regressor.predict(X_forecast)
-
-		return predictions
 
 	def graphPrices(self):
 		closeDF, dates = self.getPrices(return_dates = True)
@@ -189,7 +167,7 @@ class Stock:
 	def graphCorrelation(self, benchmark):
 		stockReturns = self.calcLogReturns()
 		benchmarkReturns = benchmark.calcLogReturns()
-		B = self.calcBeta(benchmark)
+		B = self.calcBetaAlpha(benchmark)
 		corrcoef = self.calcCorrCoef(benchmark)
 
 		plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.5, label = "Returns")

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -57,7 +58,7 @@ class DataUpdater:
 		if remove:
 			self.__removeData('hist_data/')
 
-		Dates = self.__getDates(5)
+		Dates = self.__getDates(3)
 		start = Dates['start']
 		end = Dates['end']
 
@@ -126,7 +127,7 @@ class DataUpdater:
 
 		l *= 2
 
-		while len(os.listdir('financial_statements')) != l:
+		while len(os.listdir('financial_statements')) != (l - 10):
 			progressBar(len(os.listdir('financial_statements')), l, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
@@ -142,8 +143,7 @@ def main():
 	'''indexQuote = sys.argv[1]
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
-	d1.runStockDataUpdate('DJI')
-	d1.runFinancialStatementsUpdate('DJI')
+	d1.runStockDataUpdate('GSPC')
 
 if __name__ == '__main__':
 	main()

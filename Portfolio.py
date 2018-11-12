@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-
 from scipy.optimize import minimize
 
 import matplotlib.pyplot as plt
@@ -16,10 +15,10 @@ style.use('ggplot')
 
 class Portfolio:
 	def __init__(self, stocks):
-		self.stocks = stocks
+		self.__stocks = stocks
 
 	def getStocks(self):
-		return self.stocks
+		return self.__stocks
 
 	def addStock(self, stock):
 		self.getStocks().append(stock)
@@ -27,7 +26,7 @@ class Portfolio:
 	def getStocksWeights(self):
 		return np.array([stock.getWeight() for stock in self.getStocks()])
 
-	def _calcCovMatrix(self):
+	def __calcCovMatrix(self):
 		ret = {}
 
 		for stock in self.getStocks():
@@ -39,16 +38,16 @@ class Portfolio:
 		return ret, covMatrix
 
 	def calcMinVarAlloc(self, save = True):
-		ret, covMatrix = self._calcCovMatrix()
+		ret, covMatrix = self.__calcCovMatrix()
 
 		C_inv = np.linalg.inv(covMatrix.values)
-		e = np.ones(len(self.getStocks()))
+		e = np.ones(len(self.__stocks))
 
 		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
 		i = 0
 
 		if save:
-			for stock in self.getStocks():
+			for stock in self.__stocks:
 				stock.setWeight(weights[i])
 				i += 1
 
@@ -82,28 +81,9 @@ class Portfolio:
 
 		return weights
 
-	def calcPerformance(self, rf, full = True):
-		benchmark = Index('^GSPC')
-		ret, covMatrix = self._calcCovMatrix()
-		weights = self.getStocksWeights()
-
-		exRet = np.dot(ret.mean(), weights) * 252
-		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
-
-		if full:
-			sharpeRatio = (exRet - rf) / std
-			stocksBetas = np.array([s.calcBeta(benchmark)['beta'] for s in self.getStocks()])
-			beta = stocksBetas.dot(weights)
-
-			res = {'return': round(exRet, 5), 'std': round(std, 5), 'sharpe': round(sharpeRatio, 5), 'beta': round(beta, 5)}
-		else:
-			res = {'return': round(exRet, 5), 'std': round(std, 5)}
-
-		return res
-
 	def maximizeSharpeRatio(self, rf, save = True):
 		n = len(self.getStocks())
-		rets, cov = self._calcCovMatrix()
+		rets, cov = self.__calcCovMatrix()
 
 		def _minFunc(weights):
 			weights = np.array(weights)
@@ -125,6 +105,27 @@ class Portfolio:
 				i += 1
 
 		return weights
+
+	def calcPerformance(self, rf, full = True):
+		benchmark = Index('^GSPC')
+		ret, covMatrix = self.__calcCovMatrix()
+		weights = self.getStocksWeights()
+
+		exRet = np.dot(ret.mean(), weights) * 252
+		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
+
+		if full:
+			sharpeRatio = (exRet - rf) / std
+			stocksBetas = np.array([s.calcBetaAlpha(benchmark)['beta'] for s in self.__stocks])
+			stocksAlphas = np.array([s.calcBetaAlpha(benchmark)['alpha'] for s in self.__stocks])
+			beta = stocksBetas.dot(weights)
+			alpha = stocksAlphas.dot(weights)
+
+			res = {'return': round(exRet, 5), 'std': round(std, 5), 'sharpe': round(sharpeRatio, 5), 'beta': round(beta, 5), 'alpha': round(alpha, 5)}
+		else:
+			res = {'return': round(exRet, 5), 'std': round(std, 5)}
+
+		return res
 
 	def __genRandomPortfolios(self, n):
 		results = []

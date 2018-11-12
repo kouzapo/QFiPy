@@ -4,7 +4,6 @@ import datetime as dt
 
 import dill
 import psutil
-import numpy as np
 import pandas as pd
 
 def writeToSer(obj, fileName):
