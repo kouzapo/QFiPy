@@ -93,7 +93,7 @@ class CouponBond(USTreasurySecurity):
 		F = self.parValue
 
 		fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - purchasePrice
-		y = round(brentq(fun, 0.0001, 1), 5) * 2
+		y = round(brentq(fun, 0.0001, 1), 5) * self.m
 
 		return y
 
