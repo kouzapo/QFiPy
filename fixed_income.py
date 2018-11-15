@@ -28,20 +28,17 @@ def getRiskFreeRate():
 
 	return RF
 
-def FV(P, i, n, m, contComp = False):
+def FV(P, i, n, contComp = False):
 	if contComp:
 		return P * np.exp(n * i)
 	else:
-		return P * ((1 + i/m) ** (m * n))
+		return P * ((1 + i) ** n)
 
-def PV(F, i, n, m, contComp = False):
+def calcDiscountFactor(i, N, contComp = False):
 	if contComp:
-		return F * (1 / np.exp(n * i))
+		return (1 / np.exp(N * i))
 	else:
-		return F * (1 / ((1 + i/m) ** (m * n)))
-
-def PVOfAnnuity(C, i, n, m):
-	return C * ((1 - (1 + i/m) ** -(n * m)) / i/m)
+		return (1 / ((1 + i) ** N))
 
 def graphYieldCurve():
 	maturities = [1/12, 2/12, 3/12, 6/12, 1, 2, 3, 5, 7, 10, 20, 30]
@@ -79,30 +76,61 @@ class ZeroCouponBond(USTreasurySecurity):
 		return discountYield
 
 class CouponBond(USTreasurySecurity):
-	def __init__(self, parValue, i, maturity, m = 2):
+	def __init__(self, parValue, c, maturity, m = 2):
 		super().__init__(parValue, maturity)
-		self.i = i
+		self.c = c
 		self.m = m
 
-		self.coupon = self.parValue * (self.i / self.m)
+		self.periods = self.maturity * self.m
+		self.coupon = self.parValue * (self.c / self.m)
 
 	def getCoupon(self):
 		return self.coupon
 
-	def calcYieldToMaturity(self, P):
+	def calcYieldToMaturity(self, purchasePrice):
 		n = self.maturity * self.m
 		C = self.coupon
 		F = self.parValue
 
-		fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - P
+		fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - purchasePrice
+		y = round(brentq(fun, 0.0001, 1), 5) * 2
 
-		return round(brentq(fun, 0.0001, 1), 5)
+		return y
 
 	def calcPrice(self, y):
-		n = self.maturity * self.m
+		n = self.periods
 		C = self.coupon
 		F = self.parValue
 
-		P = C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n)
+		N = np.array([t for t in range(1, n + 1)])
 
-		return P
+		P = (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+
+		return round(P, 5)
+
+	def calcMacaulayDuration(self, y):
+		n = self.periods
+		C = self.coupon
+		F = self.parValue
+
+		N = np.array([t for t in range(1, n + 1)])
+
+		MacD = ((N * C * calcDiscountFactor(y / self.m, N)).sum() + n * F * calcDiscountFactor(y / self.m, n)) / self.calcPrice(y)
+
+		return round(MacD / self.m, 3)
+
+	def calcModifiedDuration(self, y):
+		MacD = self.calcMacaulayDuration(y)
+
+		return round(MacD / ((1 + y / self.m)), 3)
+
+	def graphPriceBehavior(self):
+		yields = np.arange(0.01, 0.2, 0.01)
+		prices = np.array([self.calcPrice(y) for y in yields])
+
+		plt.plot(yields, prices, color = 'blue', linewidth = 2.0, label = 'Price vs Yield')
+		plt.xlabel('Yield')
+		plt.ylabel('Price')
+		plt.title('Price Behavior')
+		plt.legend(loc = 1)
+		plt.show()
