@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import brentq
+from scipy.misc import derivative
 
 import matplotlib.pyplot as plt
 from matplotlib import style
@@ -92,10 +93,13 @@ class CouponBond(USTreasurySecurity):
 		C = self.coupon
 		F = self.parValue
 
-		fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - purchasePrice
-		y = round(brentq(fun, 0.0001, 1), 5) * self.m
+		N = np.array([t for t in range(1, n + 1)])
 
-		return y
+		#fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - purchasePrice
+		fun = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + (F / (1 + y / self.m) ** n) - purchasePrice
+		YTM = round(brentq(fun, 0.0001, 1), 5)
+
+		return YTM
 
 	def calcPrice(self, y):
 		n = self.periods
@@ -114,18 +118,37 @@ class CouponBond(USTreasurySecurity):
 		F = self.parValue
 
 		N = np.array([t for t in range(1, n + 1)])
+		P = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+		deriv = derivative(P, x0 = y, dx = 1e-6, n = 1)
 
-		MacD = ((N * C * calcDiscountFactor(y / self.m, N)).sum() + n * F * calcDiscountFactor(y / self.m, n)) / self.calcPrice(y)
+		MacD = -(1 + y/self.m) * deriv / self.calcPrice(y)
 
-		return round(MacD / self.m, 3)
+		return round(MacD, 4)
+
+		#MacD = ((N * C * calcDiscountFactor(y / self.m, N)).sum() + n * F * calcDiscountFactor(y / self.m, n)) / self.calcPrice(y)
+
+		#return round(MacD / self.m, 4)
 
 	def calcModifiedDuration(self, y):
 		MacD = self.calcMacaulayDuration(y)
 
-		return round(MacD / ((1 + y / self.m)), 3)
+		return round(MacD / ((1 + y / self.m)), 4)
+
+	def calcConvexity(self, y):
+		n = self.periods
+		C = self.coupon
+		F = self.parValue
+
+		N = np.array([t for t in range(1, n + 1)])
+		P = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+		deriv = derivative(P, x0 = y, dx = 1e-6, n = 2)
+
+		convexity = deriv / self.calcPrice(y)
+
+		return round(convexity, 4)
 
 	def graphPriceBehavior(self):
-		yields = np.arange(0.01, 0.2, 0.01)
+		yields = np.arange(0.01, 0.5, 0.01)
 		prices = np.array([self.calcPrice(y) for y in yields])
 
 		plt.plot(yields, prices, color = 'blue', linewidth = 2.0, label = 'Price vs Yield')

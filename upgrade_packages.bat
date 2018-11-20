@@ -2,6 +2,7 @@
 
 pip install -U scipy
 pip install -U numpy
+pip install -U sympy
 pip install -U pandas
 pip install -U pandas-datareader
 pip install -U matplotlib
