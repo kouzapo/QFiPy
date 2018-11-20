@@ -95,7 +95,6 @@ class CouponBond(USTreasurySecurity):
 
 		N = np.array([t for t in range(1, n + 1)])
 
-		#fun = lambda y: C * ((1 - (1 + y) ** (-n)) / y) + (F / (1 + y) ** n) - purchasePrice
 		fun = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + (F / (1 + y / self.m) ** n) - purchasePrice
 		YTM = round(brentq(fun, 0.0001, 1), 5)
 
@@ -125,10 +124,6 @@ class CouponBond(USTreasurySecurity):
 
 		return round(MacD, 4)
 
-		#MacD = ((N * C * calcDiscountFactor(y / self.m, N)).sum() + n * F * calcDiscountFactor(y / self.m, n)) / self.calcPrice(y)
-
-		#return round(MacD / self.m, 4)
-
 	def calcModifiedDuration(self, y):
 		MacD = self.calcMacaulayDuration(y)
 
@@ -146,6 +141,16 @@ class CouponBond(USTreasurySecurity):
 		convexity = deriv / self.calcPrice(y)
 
 		return round(convexity, 4)
+
+	def approximatePriceChange(self, y, dx = 0.01):
+		ModD = self.calcModifiedDuration(y)
+		convexity = self.calcConvexity(y)
+		P = self.calcPrice(y)
+
+		percentChange = -ModD * dx + 0.5 * convexity * dx ** 2
+		priceChange = P * percentChange
+
+		return {'percent_change': round(percentChange, 4), 'price_change': round(priceChange, 4)}
 
 	def graphPriceBehavior(self):
 		yields = np.arange(0.01, 0.5, 0.01)
