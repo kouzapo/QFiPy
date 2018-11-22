@@ -13,7 +13,7 @@ from fixed_income import getRiskFreeRate
 
 style.use('ggplot')
 
-class Portfolio:
+class StockPortfolio:
 	def __init__(self, stocks):
 		self.__stocks = stocks
 
@@ -54,7 +54,7 @@ class Portfolio:
 		return weights
 
 	def calcMinVarLine(self, mv, save = True):
-		ret, covMatrix = self._calcCovMatrix()
+		ret, covMatrix = self.__calcCovMatrix()
 		m = ret.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
@@ -142,7 +142,7 @@ class Portfolio:
 				stocks.append(Stock(s, weights[j]))
 				j += 1
 
-			results.append(Portfolio(stocks))
+			results.append(StockPortfolio(stocks))
 
 		return results
 
@@ -213,3 +213,6 @@ class Portfolio:
 		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
 		plt.show()
+
+class BondPortfolio:
+	pass

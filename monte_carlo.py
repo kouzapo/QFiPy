@@ -11,7 +11,7 @@ from scipy import stats
 
 from Stock import *
 from Index import *
-from Portfolio import *
+from portfolio import *
 
 def simulateRandomWalk(N):
 	R = np.random.binomial(1, 0.5, N)

@@ -45,8 +45,7 @@ def graphYieldCurve():
 	maturities = [1/12, 2/12, 3/12, 6/12, 1, 2, 3, 5, 7, 10, 20, 30]
 	yields = list(getRiskFreeRate().values())
 
-	plt.plot(maturities, yields, linewidth = 2.0, color = 'blue', label = 'Yield Curve')
-	plt.scatter(maturities, yields, color = 'red', s = 50, label = 'Security')
+	plt.plot(maturities, yields, linewidth = 1.5, color = 'blue', marker = 'o', label = 'Yield Curve')
 	plt.xlabel('Maturitiy(Years)')
 	plt.ylabel('Yield')
 	plt.title('Yield Curve of US Treasury securities')
@@ -68,13 +67,16 @@ class ZeroCouponBond(USTreasurySecurity):
 	def __init__(self, parValue, maturity):
 		super().__init__(parValue, maturity)
 
-	def calcDiscountYield(self, purchasePrice, contComp = False):
-		if contComp:
-			discountYield = np.log(self.parValue / purchasePrice) * (365 / self.maturity)
-		else:
-			discountYield = ((self.parValue - purchasePrice) / self.parValue) * (365 / self.maturity)
+	def calcDiscountYield(self, purchasePrice):
+		F = self.parValue
+		n = self.maturity
 
-		return discountYield
+		y = (F / purchasePrice) ** (1 / n) - 1
+
+		return round(y, 5)
+
+	def calcPrice(self, y):
+		pass
 
 class CouponBond(USTreasurySecurity):
 	def __init__(self, parValue, c, maturity, m = 2):
@@ -122,12 +124,12 @@ class CouponBond(USTreasurySecurity):
 
 		MacD = -(1 + y/self.m) * deriv / self.calcPrice(y)
 
-		return round(MacD, 4)
+		return round(MacD, 5)
 
 	def calcModifiedDuration(self, y):
 		MacD = self.calcMacaulayDuration(y)
 
-		return round(MacD / ((1 + y / self.m)), 4)
+		return round(MacD / ((1 + y / self.m)), 5)
 
 	def calcConvexity(self, y):
 		n = self.periods
@@ -140,7 +142,7 @@ class CouponBond(USTreasurySecurity):
 
 		convexity = deriv / self.calcPrice(y)
 
-		return round(convexity, 4)
+		return round(convexity, 5)
 
 	def approximatePriceChange(self, y, dx = 0.01):
 		ModD = self.calcModifiedDuration(y)
@@ -150,7 +152,7 @@ class CouponBond(USTreasurySecurity):
 		percentChange = -ModD * dx + 0.5 * convexity * dx ** 2
 		priceChange = P * percentChange
 
-		return {'percent_change': round(percentChange, 4), 'price_change': round(priceChange, 4)}
+		return {'percent_change': round(percentChange, 5), 'price_change': round(priceChange, 5)}
 
 	def graphPriceBehavior(self):
 		yields = np.arange(0.01, 0.5, 0.01)

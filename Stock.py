@@ -7,9 +7,7 @@ from scipy import stats
 from bs4 import BeautifulSoup
 import urllib3
 
-from sklearn import preprocessing
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -51,14 +49,7 @@ class Stock:
 		income_statement = self.getIncomeStatement()
 		balance_sheet = self.getBalanceSheet()
 
-		equity = float(balance_sheet.iloc[36])
-
-		gross_profit = float(income_statement.iloc[2])
-		net_income = float(income_statement.iloc[24])
-
-		ROE = net_income / equity
-
-		print(ROE)
+		print(balance_sheet.iloc[7])
 
 	def getPrices(self, return_dates = False):
 		DF = pd.read_csv('hist_data/' + self.quote + '.dat')
