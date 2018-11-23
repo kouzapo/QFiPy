@@ -22,9 +22,7 @@ class DataUpdater:
 		start = dt.datetime.now() - dt.timedelta(days = years * 365)
 		start = str(start.year) + '-' + str(start.month) + '-' + str(start.day)
 
-		Dates = {'start': start, 'end': end}
-
-		return Dates
+		return start, end
 
 	def __removeData(self, directory):
 		for f in os.listdir(directory):
@@ -33,7 +31,7 @@ class DataUpdater:
 			if os.path.isfile(path):
 				os.remove(path)
 
-	def __getStockData(self, symList, start, end):
+	def __getHistoricalData(self, symList, start, end):
 		for sym in symList:
 			try:
 				histDF = pdr.DataReader(sym, 'yahoo', start, end)
@@ -58,9 +56,7 @@ class DataUpdater:
 		if remove:
 			self.__removeData('hist_data/')
 
-		Dates = self.__getDates(3)
-		start = Dates['start']
-		end = Dates['end']
+		start, end = self.__getDates(3)
 
 		stockSymbols = openSymbolsFile(index)
 		indicesSymbols = openSymbolsFile('indices')
@@ -76,8 +72,8 @@ class DataUpdater:
 		S5 = stockSymbols[I[4]:]
 
 		S = [S1, S2, S3, S4, S5]
-		T = [thrd.Thread(target = self.__getStockData, args = (s, start, end)) for s in S]
-		T.append(thrd.Thread(target = self.__getStockData, args = (indicesSymbols, start, end)))
+		T = [thrd.Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
+		T.append(thrd.Thread(target = self.__getHistoricalData, args = (indicesSymbols, start, end)))
 
 		print("Downloading historical data...")
 
@@ -127,7 +123,7 @@ class DataUpdater:
 
 		l *= 2
 
-		while len(os.listdir('financial_statements')) != (l - 10):
+		while len(os.listdir('financial_statements')) != (l - 12):
 			progressBar(len(os.listdir('financial_statements')), l, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
@@ -144,6 +140,10 @@ def main():
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
 	d1.runStockDataUpdate('GSPC')
+	#d1.runFinancialStatementsUpdate('GSPC')
+
+	for _ in range(3):
+		print('\a', end = '\r')
 
 if __name__ == '__main__':
 	main()

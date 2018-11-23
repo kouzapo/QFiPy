@@ -37,21 +37,27 @@ class StockPortfolio:
 
 		return ret, covMatrix
 
-	def calcMinVarAlloc(self, save = True):
+	def calcMinVarAlloc(self, save = True, allow_sort = False):
 		n = len(self.__stocks)
 		rets, covMatrix = self.__calcCovMatrix()
 
+		#Formula calculation solution.
 		'''C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.__stocks))
 
 		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))'''
 
-		minFunc = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+		#Optimization solution.
+		minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-		bnds = tuple((0, 1) for _ in range(n))
 
-		res = minimize(minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		if allow_sort:
+			bnds = tuple((-1, 1) for _ in range(n))
+		else:
+			bnds = tuple((0, 1) for _ in range(n))
+
+		res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
 		weights = res.get('x')
 		i = 0
 
@@ -62,9 +68,12 @@ class StockPortfolio:
 
 		return weights
 
-	def calcMinVarLine(self, mv, save = True):
-		ret, covMatrix = self.__calcCovMatrix()
-		m = ret.mean() * 252
+	def calcMinVarLine(self, mv, save = True, allow_sort = False):
+		n = len(self.__stocks)
+		rets, covMatrix = self.__calcCovMatrix()
+
+		#Formula calculation solution.
+		'''m = rets.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
 
@@ -80,7 +89,20 @@ class StockPortfolio:
 		B = np.linalg.det([[eC_invE, 1], [mC_invE, mv]])
 		C = np.linalg.det([[eC_invE, eC_invM], [mC_invE, mC_invM]])
 
-		weights = (A * eC_inv + B * mC_inv) / C
+		weights = (A * eC_inv + B * mC_inv) / C'''
+
+		#Optimization solution.
+		minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+
+		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
+
+		if allow_sort:
+			bnds = tuple((-1, 1) for _ in range(n))
+		else:
+			bnds = tuple((0, 1) for _ in range(n))
+
+		res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		weights = res.get('x')
 		i = 0
 
 		if save:
@@ -116,17 +138,19 @@ class StockPortfolio:
 		return weights
 
 	def calcPerformance(self, *rf):
-		benchmark = Index('^GSPC')
-		ret, covMatrix = self.__calcCovMatrix()
+		rets, covMatrix = self.__calcCovMatrix()
 		weights = self.getStocksWeights()
 
-		exRet = np.dot(ret.mean(), weights) * 252
+		exRet = np.dot(rets.mean(), weights) * 252
 		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
 
 		if rf:
+			benchmark = Index('^GSPC')
+
 			sharpeRatio = (exRet - rf[0]) / std
 			stocksBetas = np.array([s.calcBetaAlpha(benchmark)['beta'] for s in self.__stocks])
 			stocksAlphas = np.array([s.calcBetaAlpha(benchmark)['alpha'] for s in self.__stocks])
+
 			beta = stocksBetas.dot(weights)
 			alpha = stocksAlphas.dot(weights)
 
