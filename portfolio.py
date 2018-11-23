@@ -24,12 +24,12 @@ class StockPortfolio:
 		self.getStocks().append(stock)
 
 	def getStocksWeights(self):
-		return np.array([stock.getWeight() for stock in self.getStocks()])
+		return np.array([stock.getWeight() for stock in self.__stocks])
 
 	def __calcCovMatrix(self):
 		ret = {}
 
-		for stock in self.getStocks():
+		for stock in self.__stocks:
 			ret[stock.getQuote()] = stock.calcLogReturns()
 
 		ret = pd.DataFrame(ret)
@@ -38,12 +38,21 @@ class StockPortfolio:
 		return ret, covMatrix
 
 	def calcMinVarAlloc(self, save = True):
-		ret, covMatrix = self.__calcCovMatrix()
+		n = len(self.__stocks)
+		rets, covMatrix = self.__calcCovMatrix()
 
-		C_inv = np.linalg.inv(covMatrix.values)
+		'''C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.__stocks))
 
-		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
+		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))'''
+
+		minFunc = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+
+		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+		bnds = tuple((0, 1) for _ in range(n))
+
+		res = minimize(minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		weights = res.get('x')
 		i = 0
 
 		if save:
@@ -82,31 +91,31 @@ class StockPortfolio:
 		return weights
 
 	def maximizeSharpeRatio(self, rf, save = True):
-		n = len(self.getStocks())
+		n = len(self.__stocks)
 		rets, cov = self.__calcCovMatrix()
 
-		def _minFunc(weights):
+		def __minFunc(weights):
 			weights = np.array(weights)
-			pret = np.sum(rets.mean() * weights) * 252
-			pvol = np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+			portExpRet = np.sum(rets.mean() * weights) * 252
+			portStd = np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
 
-			return -((pret - rf) / pvol)
+			return -((portExpRet - rf) / portStd)
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-		bnds = tuple((0, 1) for x in range(n))
+		bnds = tuple((0, 1) for _ in range(n))
 
-		res = minimize(_minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+		res = minimize(__minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
 		weights = res.get('x')
 		i = 0
 
 		if save:
-			for stock in self.getStocks():
+			for stock in self.__stocks:
 				stock.setWeight(weights[i])
 				i += 1
 
 		return weights
 
-	def calcPerformance(self, rf, full = True):
+	def calcPerformance(self, *rf):
 		benchmark = Index('^GSPC')
 		ret, covMatrix = self.__calcCovMatrix()
 		weights = self.getStocksWeights()
@@ -114,8 +123,8 @@ class StockPortfolio:
 		exRet = np.dot(ret.mean(), weights) * 252
 		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
 
-		if full:
-			sharpeRatio = (exRet - rf) / std
+		if rf:
+			sharpeRatio = (exRet - rf[0]) / std
 			stocksBetas = np.array([s.calcBetaAlpha(benchmark)['beta'] for s in self.__stocks])
 			stocksAlphas = np.array([s.calcBetaAlpha(benchmark)['alpha'] for s in self.__stocks])
 			beta = stocksBetas.dot(weights)
@@ -127,41 +136,15 @@ class StockPortfolio:
 
 		return res
 
-	def __genRandomPortfolios(self, n):
-		results = []
-
-		for i in range(n):
-			weights = np.random.random(len(self.getStocks()))
-			weights /= np.sum(weights)
-
-			quotes = [s.getQuote() for s in self.getStocks()]
-			stocks = []
-			j = 0
-
-			for s in quotes:
-				stocks.append(Stock(s, weights[j]))
-				j += 1
-
-			results.append(StockPortfolio(stocks))
-
-		return results
-
 	def graphEfficientFrontier(self):
-		rf = getRiskFreeRate()['10Y']
-
-		self.calcMinVarAlloc()
-		res = self.calcPerformance(rf)
-
-		self.maximizeSharpeRatio(rf)
-
-		R = np.arange(0, 0.4, 0.01)
+		R = np.arange(0, 0.35, 0.01)
 
 		portExpRet = []
 		portStd = []
 
 		for i in R:
 			self.calcMinVarLine(i)
-			res = self.calcPerformance(rf)
+			res = self.calcPerformance()
 			m = res['return']
 			s = res['std']
 
@@ -171,7 +154,7 @@ class StockPortfolio:
 		stockExpRet = []
 		stockStd = []
 
-		for stock in self.getStocks():
+		for stock in self.__stocks:
 			stockExpRet.append(stock.calcExpReturn())
 			stockStd.append(stock.calcStd())
 
@@ -185,6 +168,25 @@ class StockPortfolio:
 
 		return portExpRet, portStd
 
+	def __genRandomPortfolios(self, n):
+		results = []
+
+		for i in range(n):
+			weights = np.random.random(len(self.__stocks))
+			weights /= np.sum(weights)
+
+			quotes = [s.getQuote() for s in self.__stocks]
+			stocks = []
+			j = 0
+
+			for q in quotes:
+				stocks.append(Stock(q, weights[j]))
+				j += 1
+
+			results.append(StockPortfolio(stocks))
+
+		return results
+
 	def graphSimulatedRandomProtfolios(self, I):
 		P = self.__genRandomPortfolios(I)
 		rf = getRiskFreeRate()['10Y']
@@ -194,7 +196,7 @@ class StockPortfolio:
 		i = 0
 
 		for p in P:
-			res = p.calcPerformance(rf, full = False)
+			res = p.calcPerformance()
 			m = res['return']
 			s = res['std']
 			print(i)
