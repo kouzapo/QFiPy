@@ -25,6 +25,9 @@ class DataUpdater:
 		return start, end
 
 	def __removeData(self, directory):
+		if not os.path.isdir(directory):
+			os.mkdir(directory)
+
 		for f in os.listdir(directory):
 			path = os.path.join(directory, f)
 
