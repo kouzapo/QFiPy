@@ -36,12 +36,15 @@ class DataUpdater:
 
 	def __getHistoricalData(self, symList, start, end):
 		for sym in symList:
-			try:
-				histDF = pdr.DataReader(sym, 'yahoo', start, end)
-				histDF.to_csv('hist_data/' + sym + '.dat')
+			while True:
+				try:
+					histDF = pdr.DataReader(sym, 'yahoo', start, end)
+					histDF.to_csv('hist_data/' + sym + '.dat')
 
-			except Exception:
-				pass
+					break
+
+				except Exception:
+					pass
 
 	def __getFinancialStatements(self, symList):
 		for sym in symList:
