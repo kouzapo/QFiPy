@@ -2,7 +2,8 @@
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize
+from scipy.optimize import minimize, fsolve
+from scipy import interpolate
 
 import matplotlib.pyplot as plt
 from matplotlib import style
@@ -73,7 +74,7 @@ class StockPortfolio:
 		rets, covMatrix = self.__calcCovMatrix()
 
 		#Formula calculation solution.
-		'''m = rets.mean() * 252
+		m = rets.mean() * 252
 		C_inv = np.linalg.inv(covMatrix.values)
 		e = np.ones(len(self.getStocks()))
 
@@ -89,10 +90,10 @@ class StockPortfolio:
 		B = np.linalg.det([[eC_invE, 1], [mC_invE, mv]])
 		C = np.linalg.det([[eC_invE, eC_invM], [mC_invE, mC_invM]])
 
-		weights = (A * eC_inv + B * mC_inv) / C'''
+		weights = (A * eC_inv + B * mC_inv) / C
 
 		#Optimization solution.
-		minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+		'''minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
 
@@ -102,7 +103,7 @@ class StockPortfolio:
 			bnds = tuple((0, 1) for _ in range(n))
 
 		res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
-		weights = res.get('x')
+		weights = res.get('x')'''
 		i = 0
 
 		if save:
@@ -160,14 +161,14 @@ class StockPortfolio:
 
 		return res
 
-	def graphEfficientFrontier(self):
-		R = np.arange(0, 0.35, 0.01)
+	def graphEfficientFrontier(self, graph = True):
+		R = np.linspace(0.05, 0.35, 50)
 
 		portExpRet = []
 		portStd = []
 
 		for i in R:
-			self.calcMinVarLine(i)
+			self.calcMinVarLine(i, allow_sort = True)
 			res = self.calcPerformance()
 			m = res['return']
 			s = res['std']
@@ -182,13 +183,14 @@ class StockPortfolio:
 			stockExpRet.append(stock.calcExpReturn())
 			stockStd.append(stock.calcStd())
 
-		plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
-		plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
-		plt.ylabel("Expected return")
-		plt.xlabel("Standard deviation")
-		plt.title("Efficient Frontier with individual assets")
-		plt.legend(loc = 2)
-		plt.show()
+		if graph:
+			plt.plot(portStd, portExpRet, color = 'blue', linewidth = 2, label = "Efficient Frontier")
+			plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
+			plt.ylabel("Expected return")
+			plt.xlabel("Standard deviation")
+			plt.title("Efficient Frontier with individual assets")
+			plt.legend(loc = 2)
+			plt.show()
 
 		return portExpRet, portStd
 
