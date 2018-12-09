@@ -61,6 +61,26 @@ class Index:
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]
 
+	def descriptiveStats(self):
+		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
+		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
+
+		desc = logReturns.describe()
+		skewness = stats.skew(logReturns)
+		kurtosis = stats.kurtosis(logReturns)
+
+		print('-----Descriptive Statistics for ' + self.quote + '-----')
+		print('count\t', desc['count'])
+		print('mean\t', round(desc['mean'], 6))
+		print('std\t', round(desc['std'], 6))
+		print('skew\t', round(skewness, 6))
+		print('kurt\t', round(kurtosis, 6))
+		print('min\t', round(desc['min'], 6))
+		print('max\t', round(desc['max'], 6))
+		print('25%\t', round(desc['25%'], 6))
+		print('50%\t', round(desc['50%'], 6))
+		print('75%\t', round(desc['75%'], 6))
+
 	def graphPrices(self):
 		closeDF, dates = self.getPrices(return_dates = True)
 		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
@@ -97,4 +117,20 @@ class Index:
 		ax2.set_ylabel("Density", fontsize = 12)
 		ax2.set_xlabel("% Change", fontsize = 15)
 		plt.suptitle(str(self.getQuote()) + " Log Returns," + " μ = " + str(round(self.calcExpReturn(), 3)) + " σ = " + str(round(self.calcStd(), 3)), fontsize = 15)
+		plt.show()
+
+	def graphQQPlot(self):
+		logReturns = self.calcLogReturns()
+		R = np.arange(-3.3, 3.3, 0.1)
+
+		quantiles, LSFit = stats.probplot(logReturns, dist="norm")
+
+		plt.scatter(quantiles[0], quantiles[1], color = 'blue', alpha = 0.5, label = 'Quantiles')
+		plt.plot(R, LSFit[0] * R + LSFit[1], color = 'red', label = 'Best Fit Line')
+
+		plt.ylabel('Ordered Values')
+		plt.xlabel('Theoretical quantiles')
+		plt.legend(loc = 2)
+		plt.title('Q-Q plot for ' + self.quote, fontsize = 18)
+
 		plt.show()
