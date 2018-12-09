@@ -52,11 +52,35 @@ class Index:
 
 		return np.array(logReturns)
 
-	def calcExpReturn(self):
-		return self.calcLogReturns().mean() * 252
+	def calcExpReturn(self, annualized = True):
+		logReturns = self.calcLogReturns()
 
-	def calcStd(self):
-		return self.calcLogReturns().std() * np.sqrt(252)
+		if annualized:
+			return logReturns.mean() * 252
+		else:
+			return logReturns.mean()
+
+	def calcStd(self, annualized = True):
+		logReturns = self.calcLogReturns()
+
+		if annualized:
+			return logReturns.std() * np.sqrt(252)
+		else:
+			return logReturns.std()
+
+	def calcSkewness(self):
+		return stats.skew(self.calcLogReturns())
+
+	def calcKurtosis(self):
+		return stats.kurtosis(self.calcLogReturns())
+
+	def calcCorrCoef(self, asset):
+		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
+
+	def calcAutocorr(self, lag):
+		logReturns = self.calcLogReturns()
+
+		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
 
 	def normalTest(self):
 		return stats.normaltest(self.calcLogReturns())[1]
@@ -66,8 +90,8 @@ class Index:
 		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		desc = logReturns.describe()
-		skewness = stats.skew(logReturns)
-		kurtosis = stats.kurtosis(logReturns)
+		skewness = self.calcSkewness()
+		kurtosis = self.calcKurtosis()
 
 		print('-----Descriptive Statistics for ' + self.quote + '-----')
 		print('count\t', desc['count'])
@@ -116,7 +140,7 @@ class Index:
 
 		ax2.set_ylabel("Density", fontsize = 12)
 		ax2.set_xlabel("% Change", fontsize = 15)
-		plt.suptitle(str(self.getQuote()) + " Log Returns," + " μ = " + str(round(self.calcExpReturn(), 3)) + " σ = " + str(round(self.calcStd(), 3)), fontsize = 15)
+		plt.suptitle(str(self.getQuote()) + " Log Returns", fontsize = 18)
 		plt.show()
 
 	def graphQQPlot(self):

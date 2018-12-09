@@ -87,8 +87,19 @@ class Stock:
 		else:
 			return logReturns.std()
 
+	def calcSkewness(self):
+		return stats.skew(self.calcLogReturns())
+
+	def calcKurtosis(self):
+		return stats.kurtosis(self.calcLogReturns())
+
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
+
+	def calcAutocorr(self, lag):
+		logReturns = self.calcLogReturns()
+
+		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
 
 	def calcBetaAlpha(self, benchmark):
 		stockReturns = self.calcLogReturns()
@@ -121,8 +132,8 @@ class Stock:
 		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		desc = logReturns.describe()
-		skewness = stats.skew(logReturns)
-		kurtosis = stats.kurtosis(logReturns)
+		skewness = self.calcSkewness()
+		kurtosis = self.calcKurtosis()
 
 		print('-----Descriptive Statistics for ' + self.quote + '-----')
 		print('count\t', desc['count'])
@@ -171,7 +182,7 @@ class Stock:
 
 		ax2.set_ylabel("Density", fontsize = 12)
 		ax2.set_xlabel("% Change", fontsize = 15)
-		plt.suptitle(str(self.getQuote()) + " Log Returns," + " μ = " + str(round(self.calcExpReturn(), 3)) + " σ = " + str(round(self.calcStd(), 3)), fontsize = 15)
+		plt.suptitle(str(self.getQuote()) + " Log Returns", fontsize = 18)
 
 		plt.show()
 
