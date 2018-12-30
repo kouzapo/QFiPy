@@ -37,7 +37,7 @@ class StockPortfolio:
 
 		return ret, covMatrix
 
-	def calcMinVarAlloc(self, save = True, allow_sort = False):
+	def calcMinVarAlloc(self, save = True, allow_short = False):
 		n = len(self.__stocks)
 		rets, covMatrix = self.__calcCovMatrix()
 
@@ -52,7 +52,7 @@ class StockPortfolio:
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
 
-		if allow_sort:
+		if allow_short:
 			bnds = tuple((-1, 1) for _ in range(n))
 		else:
 			bnds = tuple((0, 1) for _ in range(n))
@@ -68,7 +68,7 @@ class StockPortfolio:
 
 		return weights
 
-	def calcMinVarLine(self, mv, save = True, allow_sort = False):
+	def calcMinVarLine(self, mv, save = True, allow_short = False):
 		n = len(self.__stocks)
 		rets, covMatrix = self.__calcCovMatrix()
 
@@ -96,7 +96,7 @@ class StockPortfolio:
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
 
-		if allow_sort:
+		if allow_short:
 			bnds = tuple((-1, 1) for _ in range(n))
 		else:
 			bnds = tuple((0, 1) for _ in range(n))
@@ -112,7 +112,7 @@ class StockPortfolio:
 
 		return weights
 
-	def maximizeSharpeRatio(self, rf, save = True, allow_sort = False):
+	def maximizeSharpeRatio(self, rf, save = True, allow_short = False):
 		n = len(self.__stocks)
 		rets, cov = self.__calcCovMatrix()
 
@@ -125,7 +125,7 @@ class StockPortfolio:
 
 		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
 
-		if allow_sort:
+		if allow_short:
 			bnds = tuple((-1, 1) for _ in range(n))
 		else:
 			bnds = tuple((0, 1) for _ in range(n))
