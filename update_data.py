@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pandas_datareader.data as pdr
 
-from utilities import openSymbolsFile, progressBar
+from utilities import openSymbolsFile, getDirectorySize, progressBar
 
 class DataUpdater:
 	def __init__(self):
@@ -62,7 +62,7 @@ class DataUpdater:
 		if remove:
 			self.__removeData('hist_data/')
 
-		start, end = self.__getDates(3)
+		start, end = self.__getDates(5)
 
 		stockSymbols = openSymbolsFile(index)
 		indicesSymbols = openSymbolsFile('indices')
@@ -86,6 +86,8 @@ class DataUpdater:
 		l += len(indicesSymbols)
 		progressBar(0, l, prefix = 'Progress:', length = 50)
 
+		start = time.time()
+
 		for t in T:
 			t.start()
 
@@ -98,7 +100,12 @@ class DataUpdater:
 
 		progressBar(l, l, prefix = 'Progress:', length = 50)
 		print()
-		print("Complete.")
+
+		total_time = str(round(time.time() - start, 1))
+		files_count = str(len(os.listdir('hist_data')))
+		files_size = str(round(getDirectorySize('hist_data'), 2))
+
+		print("Total " + files_count + " files in " + total_time + ' sec (' + files_size + ' MB)')
 
 	def runFinancialStatementsUpdate(self, index, remove = True):
 		if remove:

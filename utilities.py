@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import datetime as dt
 
 import dill
@@ -60,6 +61,20 @@ def openSectorFile(sector):
 	f.close()
 
 	return symbols
+
+def getDirectorySize(directory, MB = True):
+	total = 0
+
+	for dirpath, dirnames, filenames in os.walk(directory):
+		for f in filenames:
+			fp = os.path.join(dirpath, f)
+
+			total += os.path.getsize(fp)
+
+	if MB:
+		return total / (1024 ** 2)
+	else:
+		return total
 
 def getTime():
 	return dt.datetime.now().strftime("%H:%M:%S")

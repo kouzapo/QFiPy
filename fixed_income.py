@@ -163,4 +163,5 @@ class CouponBond(USTreasurySecurity):
 		plt.ylabel('Price')
 		plt.title('Price Behavior')
 		plt.legend(loc = 1)
+
 		plt.show()

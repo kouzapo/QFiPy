@@ -302,7 +302,7 @@ class Index:
 		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
 
 	def normalTest(self):
-		return stats.normaltest(self.calcLogReturns())[1]
+		return stats.normaltest(self.calcLogReturns())
 
 	def descriptiveStats(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
