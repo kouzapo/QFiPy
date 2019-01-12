@@ -124,7 +124,7 @@ class Stock:
 
 		return {'VaR': logReturns[a - 1], 'CVaR': logReturns[0:a - 1].mean()}
 
-	def normalTest(self):
+	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
 
 	def descriptiveStats(self):
@@ -301,7 +301,7 @@ class Index:
 
 		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
 
-	def normalTest(self):
+	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
 
 	def descriptiveStats(self):
