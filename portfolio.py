@@ -40,24 +40,30 @@ class StockPortfolio:
 		n = len(self.__stocks)
 		rets, covMatrix = self.__calcCovMatrix()
 
-		#Formula calculation solution.
-		C_inv = np.linalg.inv(covMatrix.values)
-		e = np.ones(len(self.__stocks))
+		def __formulaCalculation():
+			C_inv = np.linalg.inv(covMatrix.values)
+			e = np.ones(len(self.__stocks))
 
-		weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
+			weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
 
-		#Optimization solution.
-		'''minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+			return weights
 
-		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+		def __optimizationSolution():
+			minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
 
-		if allow_short:
-			bnds = tuple((-1, 1) for _ in range(n))
-		else:
+			cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
 			bnds = tuple((0, 1) for _ in range(n))
 
-		res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
-		weights = res.get('x')'''
+			res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+			weights = res.get('x')
+
+			return weights
+
+		if allow_short:
+			weights =  __formulaCalculation()
+		else:
+			weights = __optimizationSolution()
+
 		i = 0
 
 		if save:
@@ -71,37 +77,47 @@ class StockPortfolio:
 		n = len(self.__stocks)
 		rets, covMatrix = self.__calcCovMatrix()
 
-		#Formula calculation solution.
-		m = rets.mean() * 252
-		C_inv = np.linalg.inv(covMatrix.values)
-		e = np.ones(len(self.getStocks()))
+		def __formulaCalculation():
+			m = rets.mean() * 252
+			C_inv = np.linalg.inv(covMatrix.values)
+			e = np.ones(len(self.getStocks()))
 
-		eC_invM = np.dot(np.dot(e, C_inv), m)
-		mC_invM = np.dot(np.dot(m, C_inv), m)
-		mC_invE = np.dot(np.dot(m, C_inv), e)
-		eC_invE = np.dot(np.dot(e, C_inv), e)
+			eC_invM = np.dot(np.dot(e, C_inv), m)
+			mC_invM = np.dot(np.dot(m, C_inv), m)
+			mC_invE = np.dot(np.dot(m, C_inv), e)
+			eC_invE = np.dot(np.dot(e, C_inv), e)
 
-		eC_inv = np.dot(e, C_inv)
-		mC_inv = np.dot(m, C_inv)
+			eC_inv = np.dot(e, C_inv)
+			mC_inv = np.dot(m, C_inv)
 
-		A = np.linalg.det([[1, eC_invM], [mv, mC_invM]])
-		B = np.linalg.det([[eC_invE, 1], [mC_invE, mv]])
-		C = np.linalg.det([[eC_invE, eC_invM], [mC_invE, mC_invM]])
+			A = np.linalg.det([[1, eC_invM], [mv, mC_invM]])
+			B = np.linalg.det([[eC_invE, 1], [mC_invE, mv]])
+			C = np.linalg.det([[eC_invE, eC_invM], [mC_invE, mC_invM]])
 
-		weights = (A * eC_inv + B * mC_inv) / C
+			weights = (A * eC_inv + B * mC_inv) / C
 
-		#Optimization solution.
-		'''minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+			return weights
 
-		cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
+		def __optimizationSolution():
+			minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
+
+			cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
+
+			if allow_short:
+				bnds = tuple((-1, 1) for _ in range(n))
+			else:
+				bnds = tuple((0, 1) for _ in range(n))
+
+			res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
+			weights = res.get('x')
+
+			return weights
 
 		if allow_short:
-			bnds = tuple((-1, 1) for _ in range(n))
+			weights =  __formulaCalculation()
 		else:
-			bnds = tuple((0, 1) for _ in range(n))
+			weights = __optimizationSolution()
 
-		res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
-		weights = res.get('x')'''
 		i = 0
 
 		if save:
