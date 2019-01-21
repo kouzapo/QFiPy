@@ -102,11 +102,7 @@ class StockPortfolio:
 			minFun = lambda weights: np.sqrt(np.dot(weights.T, np.dot(rets.cov() * 252, weights)))
 
 			cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1}, {'type': 'eq', 'fun': lambda x: np.sum(rets.mean() * x) * 252 - mv})
-
-			if allow_short:
-				bnds = tuple((-1, 1) for _ in range(n))
-			else:
-				bnds = tuple((0, 1) for _ in range(n))
+			bnds = tuple((0, 1) for _ in range(n))
 
 			res = minimize(minFun, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
 			weights = res.get('x')
