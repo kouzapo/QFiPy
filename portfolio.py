@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import threading as thrd
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -32,16 +34,16 @@ class StockPortfolio:
 			ret[stock.getQuote()] = stock.calcLogReturns()
 
 		ret = pd.DataFrame(ret)
-		covMatrix = ret.cov()
+		cov_matrix = ret.cov()
 
-		return ret, covMatrix
+		return ret, cov_matrix
 
 	def calcMinVarAlloc(self, save = True, allow_short = True):
 		n = len(self.__stocks)
-		rets, covMatrix = self.__calcCovMatrix()
+		rets, cov_matrix = self.__calcCovMatrix()
 
 		def __formulaCalculation():
-			C_inv = np.linalg.inv(covMatrix.values)
+			C_inv = np.linalg.inv(cov_matrix.values)
 			e = np.ones(len(self.__stocks))
 
 			weights = np.dot(e, C_inv) / np.dot(e, np.dot(C_inv, e))
@@ -75,11 +77,11 @@ class StockPortfolio:
 
 	def calcMinVarLine(self, mv, save = True, allow_short = True):
 		n = len(self.__stocks)
-		rets, covMatrix = self.__calcCovMatrix()
+		rets, cov_matrix = self.__calcCovMatrix()
 
 		def __formulaCalculation():
 			m = rets.mean() * 252
-			C_inv = np.linalg.inv(covMatrix.values)
+			C_inv = np.linalg.inv(cov_matrix.values)
 			e = np.ones(len(self.getStocks()))
 
 			eC_invM = np.dot(np.dot(e, C_inv), m)
@@ -125,7 +127,7 @@ class StockPortfolio:
 
 	def maximizeSharpeRatio(self, rf, save = True, allow_short = False):
 		n = len(self.__stocks)
-		rets, cov = self.__calcCovMatrix()
+		rets, cov_matrix = self.__calcCovMatrix()
 
 		def __minFunc(weights):
 			weights = np.array(weights)
@@ -143,6 +145,7 @@ class StockPortfolio:
 
 		res = minimize(__minFunc, n * [1 / n], method = 'SLSQP', bounds = bnds, constraints = cons)
 		weights = res.get('x')
+
 		i = 0
 
 		if save:
@@ -153,7 +156,7 @@ class StockPortfolio:
 		return weights
 
 	def calcExpectedReturn(self):
-		rets, covMatrix = self.__calcCovMatrix()
+		rets, cov_matrix = self.__calcCovMatrix()
 		weights = self.getStocksWeights()
 
 		exp_ret = np.dot(rets.mean(), weights) * 252
@@ -161,24 +164,33 @@ class StockPortfolio:
 		return exp_ret
 
 	def calcStandardDeviation(self):
-		rets, covMatrix = self.__calcCovMatrix()
+		rets, cov_matrix = self.__calcCovMatrix()
 		weights = self.getStocksWeights()
 
-		std_dev = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
+		std_dev = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights))) * np.sqrt(252)
 
 		return std_dev
 
-	def calcPerformance(self, *rf):
-		rets, covMatrix = self.__calcCovMatrix()
+	def calcPerformance(self, *args):
+		if len(args) == 2:
+			rets = args[0]
+			cov_matrix = args[1]
+		elif len(args) == 3:
+			rets = args[1]
+			cov_matrix = args[2]
+		else:
+			rets, cov_matrix = self.__calcCovMatrix()
+
 		weights = self.getStocksWeights()
 
 		exRet = np.dot(rets.mean(), weights) * 252
-		std = np.sqrt(np.dot(weights, np.dot(covMatrix, weights))) * np.sqrt(252)
+		std = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights))) * np.sqrt(252)
 
-		if rf:
+		if len(args) == 1:
+			rf = args[0]
 			benchmark = Index('^GSPC')
 
-			sharpeRatio = (exRet - rf[0]) / std
+			sharpeRatio = (exRet - rf) / std
 			stocksBetas = np.array([s.calcBetaAlpha(benchmark)['beta'] for s in self.__stocks])
 			stocksAlphas = np.array([s.calcBetaAlpha(benchmark)['alpha'] for s in self.__stocks])
 
@@ -192,12 +204,10 @@ class StockPortfolio:
 		return res
 
 	def printSummary(self, res):
-		symbols = [stock.getQuote() for stock in self.getStocks()]
-
 		D = pd.DataFrame([self.getStocksWeights()], index = ['Allocation'])
-		D.columns = symbols
+		D.columns = [stock.getQuote() for stock in self.getStocks()]
 
-		print('-------------------Portfolio Summary-------------------')
+		print('---------------------Portfolio Summary---------------------')
 		print(D,'\n')
 		print('Expected Return:', res['return'])
 		print('Standard Deviation:', res['std'])
@@ -211,13 +221,14 @@ class StockPortfolio:
 
 	def graphEfficientFrontier(self, graph = True):
 		R = np.linspace(0.05, 0.35, 50)
+		rets, cov_matrix = self.__calcCovMatrix()
 
 		portExpRet = []
 		portStd = []
 
 		for i in R:
 			self.calcMinVarLine(i, allow_short = True)
-			res = self.calcPerformance()
+			res = self.calcPerformance(rets, cov_matrix)
 			m = res['return']
 			s = res['std']
 
@@ -236,16 +247,16 @@ class StockPortfolio:
 			plt.scatter(stockStd, stockExpRet, s = 30, color = 'red', label = "Asset")
 			plt.ylabel("Expected return")
 			plt.xlabel("Standard deviation")
-			plt.title("Efficient Frontier with individual assets")
+			plt.title("Efficient Frontier")
 			plt.legend(loc = 2)
 			plt.show()
 
 		return portExpRet, portStd
 
-	def __genRandomPortfolios(self, n):
+	def __generateRandomPortfolios(self, N):
 		results = []
 
-		for i in range(n):
+		for i in range(N):
 			weights = np.random.random(len(self.__stocks))
 			weights /= np.sum(weights)
 
@@ -261,21 +272,43 @@ class StockPortfolio:
 
 		return results
 
-	def graphSimulatedRandomProtfolios(self, I):
-		P = self.__genRandomPortfolios(I)
-		rf = getRiskFreeRate()['10Y']
+	def graphSimulatedRandomProtfolios(self, N):
+		simulated_portfolios = self.__generateRandomPortfolios(N)
+		rets, cov_matrix = self.__calcCovMatrix()
+
+
+
+
+
+		'''A = np.arange(0, N, N / 10)
+		A = np.array([int(i) for i in A])
+
+		S = [simulated_portfolios[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		S.append(simulated_portfolios[A[-1]:])'''
+
+
+
+
+		print(S)
+		print(len(S[0]))
+		print(len(S))
+
+
+
+
+		'''rf = getRiskFreeRate()['10Y']
 
 		M = []
 		S = []
 		i = 0
 
-		for p in P:
-			res = p.calcPerformance()
+		for p in simulated_portfolios:
+			res = p.calcPerformance(rets, cov_matrix)
 			m = res['return']
 			s = res['std']
-			print(i)
+			#print(i)
 
-			i += 1
+			#i += 1
 			M.append(m)
 			S.append(s)
 
@@ -288,7 +321,7 @@ class StockPortfolio:
 		plt.title("Simulated Random Portfolios")
 		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
-		plt.show()
+		plt.show()'''
 
 class BondPortfolio:
 	pass
