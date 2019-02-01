@@ -14,18 +14,18 @@ def getRiskFreeRate():
 	RF = {}
 	D = pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1]
 
-	RF['1M'] = round(float(np.array(D[1])[-1]) / 100, 4)
-	RF['2M'] = round(float(np.array(D[2])[-1]) / 100, 4)
-	RF['3M'] = round(float(np.array(D[3])[-1]) / 100, 4)
-	RF['6M'] = round(float(np.array(D[4])[-1]) / 100, 4)
-	RF['1Y'] = round(float(np.array(D[5])[-1]) / 100, 4)
-	RF['2Y'] = round(float(np.array(D[6])[-1]) / 100, 4)
-	RF['3Y'] = round(float(np.array(D[7])[-1]) / 100, 4)
-	RF['5Y'] = round(float(np.array(D[8])[-1]) / 100, 4)
-	RF['7Y'] = round(float(np.array(D[9])[-1]) / 100, 4)
-	RF['10Y'] = round(float(np.array(D[10])[-1]) / 100, 4)
-	RF['20Y'] = round(float(np.array(D[11])[-1]) / 100, 4)
-	RF['30Y'] = round(float(np.array(D[12])[-1]) / 100, 4)
+	RF['1M'] = round(float(D['1 mo'].iloc[-1]) / 100, 4)
+	RF['2M'] = round(float(D['2 mo'].iloc[-1]) / 100, 4)
+	RF['3M'] = round(float(D['3 mo'].iloc[-1]) / 100, 4)
+	RF['6M'] = round(float(D['6 mo'].iloc[-1]) / 100, 4)
+	RF['1Y'] = round(float(D['1 yr'].iloc[-1]) / 100, 4)
+	RF['2Y'] = round(float(D['2 yr'].iloc[-1]) / 100, 4)
+	RF['3Y'] = round(float(D['3 yr'].iloc[-1]) / 100, 4)
+	RF['5Y'] = round(float(D['5 yr'].iloc[-1]) / 100, 4)
+	RF['7Y'] = round(float(D['7 yr'].iloc[-1]) / 100, 4)
+	RF['10Y'] = round(float(D['10 yr'].iloc[-1]) / 100, 4)
+	RF['20Y'] = round(float(D['20 yr'].iloc[-1]) / 100, 4)
+	RF['30Y'] = round(float(D['30 yr'].iloc[-1]) / 100, 4)
 
 	return RF
 
@@ -46,7 +46,7 @@ def graphYieldCurve():
 	yields = list(getRiskFreeRate().values())
 
 	plt.plot(maturities, yields, linewidth = 1.5, color = 'blue', marker = 'o', label = 'Yield Curve')
-	plt.xlabel('Maturitiy(Years)')
+	plt.xlabel('Maturitiy (Years)')
 	plt.ylabel('Yield')
 	plt.title('Yield Curve of US Treasury securities')
 	plt.legend(loc = 2)

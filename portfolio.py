@@ -276,39 +276,22 @@ class StockPortfolio:
 		simulated_portfolios = self.__generateRandomPortfolios(N)
 		rets, cov_matrix = self.__calcCovMatrix()
 
-
-
-
-
 		'''A = np.arange(0, N, N / 10)
 		A = np.array([int(i) for i in A])
 
 		S = [simulated_portfolios[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(simulated_portfolios[A[-1]:])'''
 
-
-
-
-		print(S)
-		print(len(S[0]))
-		print(len(S))
-
-
-
-
-		'''rf = getRiskFreeRate()['10Y']
+		rf = getRiskFreeRate()['10Y']
 
 		M = []
 		S = []
-		i = 0
 
 		for p in simulated_portfolios:
 			res = p.calcPerformance(rets, cov_matrix)
 			m = res['return']
 			s = res['std']
-			#print(i)
 
-			#i += 1
 			M.append(m)
 			S.append(s)
 
@@ -321,7 +304,7 @@ class StockPortfolio:
 		plt.title("Simulated Random Portfolios")
 		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
-		plt.show()'''
+		plt.show()
 
 class BondPortfolio:
 	pass

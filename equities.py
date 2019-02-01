@@ -91,7 +91,7 @@ class Stock:
 		return stats.skew(self.calcLogReturns())
 
 	def calcKurtosis(self):
-		return stats.kurtosis(self.calcLogReturns())
+		return stats.kurtosis(self.calcLogReturns(), fisher = False)
 
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
@@ -110,9 +110,8 @@ class Stock:
 
 		regressor = LinearRegression()
 		regressor.fit(benchmarkReturns, stockReturns)
-		R_sq = regressor.score(benchmarkReturns, stockReturns)
 
-		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0], 'R-squared': R_sq}
+		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0]}
 
 	def calcSharpeRatio(self, rf):
 		return (self.calcExpReturn() - rf) / self.calcStd()
@@ -126,6 +125,21 @@ class Stock:
 
 	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
+
+	def testStationarity(self, number_of_subsamples):
+		logReturns = self.calcLogReturns()
+		n = len(logReturns)
+
+		A = np.arange(0, n, n / number_of_subsamples)
+		A = np.array([int(i) for i in A])
+
+		subsamples = [logReturns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		subsamples.append(logReturns[A[-1]:])
+
+		results = [{'mean': round(subsample.mean(), 5), 'std': round(subsample.std(), 5)} for subsample in subsamples]
+
+		for i in results:
+			print(i)
 
 	def descriptiveStats(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
@@ -147,7 +161,7 @@ class Stock:
 		print('50%\t', round(desc['50%'], 6))
 		print('75%\t', round(desc['75%'], 6))
 
-	def graphPrices(self):
+	def graphPrice(self):
 		closeDF, dates = self.getPrices(return_dates = True)
 		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
@@ -304,6 +318,21 @@ class Index:
 	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
 
+	def testStationarity(self, number_of_subsamples):
+		logReturns = self.calcLogReturns()
+		n = len(logReturns)
+
+		A = np.arange(0, n, n / number_of_subsamples)
+		A = np.array([int(i) for i in A])
+
+		subsamples = [logReturns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		subsamples.append(logReturns[A[-1]:])
+
+		results = [{'mean': round(subsample.mean(), 5), 'std': round(subsample.std(), 5)} for subsample in subsamples]
+
+		for i in results:
+			print(i)
+
 	def descriptiveStats(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
 		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
@@ -324,7 +353,7 @@ class Index:
 		print('50%\t', round(desc['50%'], 6))
 		print('75%\t', round(desc['75%'], 6))
 
-	def graphPrices(self):
+	def graphPrice(self):
 		closeDF, dates = self.getPrices(return_dates = True)
 		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)

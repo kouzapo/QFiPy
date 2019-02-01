@@ -44,6 +44,7 @@ class DataUpdater:
 					break
 
 				except Exception:
+					#print(sym)
 					pass
 
 	def __getFinancialStatements(self, symList):
@@ -62,29 +63,25 @@ class DataUpdater:
 		if remove:
 			self.__removeData('hist_data/')
 
-		start, end = self.__getDates(5)
+		start, end = self.__getDates(2)
 
 		stockSymbols = openSymbolsFile(index)
 		indicesSymbols = openSymbolsFile('indices')
 
-		l = len(stockSymbols)
-		I = np.arange(0, l, l / 5)
-		I = np.array([int(i) for i in I])
+		n = len(stockSymbols)
+		A = np.arange(0, n, n / 5)
+		A = np.array([int(i) for i in A])
 
-		S1 = stockSymbols[I[0]:I[1]]
-		S2 = stockSymbols[I[1]:I[2]]
-		S3 = stockSymbols[I[2]:I[3]]
-		S4 = stockSymbols[I[3]:I[4]]
-		S5 = stockSymbols[I[4]:]
+		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		S.append(stockSymbols[A[-1]:])
 
-		S = [S1, S2, S3, S4, S5]
 		T = [thrd.Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
 		T.append(thrd.Thread(target = self.__getHistoricalData, args = (indicesSymbols, start, end)))
 
 		print("Downloading historical data...")
 
-		l += len(indicesSymbols)
-		progressBar(0, l, prefix = 'Progress:', length = 50)
+		n += len(indicesSymbols)
+		progressBar(0, n, prefix = 'Progress:', length = 50)
 
 		start = time.time()
 
@@ -94,11 +91,11 @@ class DataUpdater:
 		'''for t in T:
 			t.join()'''
 
-		while len(os.listdir('hist_data')) != l:
-			progressBar(len(os.listdir('hist_data')), l, prefix = 'Progress:', length = 50)
+		while len(os.listdir('hist_data')) != n:
+			progressBar(len(os.listdir('hist_data')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
-		progressBar(l, l, prefix = 'Progress:', length = 50)
+		progressBar(n, n, prefix = 'Progress:', length = 50)
 		print()
 
 		total_time = str(round(time.time() - start, 1))
@@ -113,17 +110,13 @@ class DataUpdater:
 
 		stockSymbols = openSymbolsFile(index)
 
-		l = len(stockSymbols)
-		I = np.arange(0, l, l / 5)
-		I = np.array([int(i) for i in I])
+		n = len(stockSymbols)
+		A = np.arange(0, n, n / 5)
+		A = np.array([int(i) for i in A])
 
-		S1 = stockSymbols[I[0]:I[1]]
-		S2 = stockSymbols[I[1]:I[2]]
-		S3 = stockSymbols[I[2]:I[3]]
-		S4 = stockSymbols[I[3]:I[4]]
-		S5 = stockSymbols[I[4]:]
+		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		S.append(stockSymbols[A[-1]:])
 
-		S = [S1, S2, S3, S4, S5]
 		T = [thrd.Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
 
 		print("Downloading financial statements...")
@@ -134,18 +127,18 @@ class DataUpdater:
 		'''for t in T:
 			t.join()'''
 
-		l *= 2
+		n *= 2
 
-		while len(os.listdir('financial_statements')) != (l - 12):
-			progressBar(len(os.listdir('financial_statements')), l, prefix = 'Progress:', length = 50)
+		while len(os.listdir('financial_statements')) != (n - 12):
+			progressBar(len(os.listdir('financial_statements')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
-		progressBar(l, l, prefix = 'Progress:', length = 50)
+		progressBar(n, n, prefix = 'Progress:', length = 50)
 		print()
 		print("Complete.")
 
 def main():
-	os.system('cls')
+	#os.system('cls')
 
 	d1 = DataUpdater()
 
