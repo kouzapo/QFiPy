@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 
 from equities import *
-from fixed_income import getRiskFreeRate
+from fixed_income import get_risk_free_rate
 
 style.use('ggplot')
 
@@ -276,13 +276,12 @@ class StockPortfolio:
 		simulated_portfolios = self.__generateRandomPortfolios(N)
 		rets, cov_matrix = self.__calcCovMatrix()
 
-		'''A = np.arange(0, N, N / 10)
-		A = np.array([int(i) for i in A])
+		'''A = np.arange(0, N, N / 10, dtype = int)
 
 		S = [simulated_portfolios[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(simulated_portfolios[A[-1]:])'''
 
-		rf = getRiskFreeRate()['10Y']
+		rf = get_risk_free_rate()['10Y']
 
 		M = []
 		S = []

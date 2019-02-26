@@ -7,19 +7,19 @@ import dill
 import psutil
 import pandas as pd
 
-def writeToSer(obj, fileName):
+def write_to_ser(obj, fileName):
 	outFile = open(fileName, 'wb')
 	dill.dump(obj, outFile)
 
 	outFile.close()
 
-def readFromSer(fileName):
+def read_from_ser(fileName):
 	inFile = open(fileName, 'rb')
 	obj = dill.load(inFile)
 
 	return obj
 
-def getDJISymbols():
+def get_DJI_symbols():
 	f = open('DJI_symbols.dat', 'w')
 	DJI_list = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
 
@@ -28,7 +28,7 @@ def getDJISymbols():
 
 	f.close()
 
-def getGSPCSymbols():
+def get_GSPC_symbols():
 	f = open('GSPC_symbols.dat', 'w')
 	GSPC_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
 
@@ -37,7 +37,7 @@ def getGSPCSymbols():
 
 	f.close()
 
-def getGDAXISymbols():
+def get_GDAXI_symbols():
 	f = open('GDAXI_symbols.dat', 'w')
 	GDAXI_list = pd.read_html('https://en.wikipedia.org/wiki/DAX')
 
@@ -46,7 +46,7 @@ def getGDAXISymbols():
 
 	f.close()
 
-def openSymbolsFile(index):
+def open_symbols_file(index):
 	f = open(index + '_symbols.dat', 'r')
 	symbols = [symbol.strip() for symbol in f]
 
@@ -54,7 +54,7 @@ def openSymbolsFile(index):
 
 	return symbols
 
-def openSectorFile(sector):
+def open_sectors_file(sector):
 	f = open('GSPC_sectors\\' + sector + '.dat', 'r')
 	symbols = [symbol.strip() for symbol in f]
 
@@ -62,7 +62,7 @@ def openSectorFile(sector):
 
 	return symbols
 
-def getDirectorySize(directory, MB = True):
+def get_directory_size(directory, MB = True):
 	total = 0
 
 	for dirpath, dirnames, filenames in os.walk(directory):
@@ -76,10 +76,10 @@ def getDirectorySize(directory, MB = True):
 	else:
 		return total
 
-def getTime():
+def get_current_time():
 	return dt.datetime.now().strftime("%H:%M:%S")
 
-def progressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+def progress_bar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
 	percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
 	filledLength = int(length * iteration // total)
 	bar = fill * filledLength + '-' * (length - filledLength)

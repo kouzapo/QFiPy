@@ -5,13 +5,13 @@ import os
 import sys
 import time
 import datetime as dt
-import threading as thrd
+from threading import Thread, Lock
 
 import numpy as np
 import pandas as pd
 import pandas_datareader.data as pdr
 
-from utilities import openSymbolsFile, getDirectorySize, progressBar
+from utilities import open_symbols_file, get_directory_size, progress_bar
 
 class DataUpdater:
 	def __init__(self):
@@ -65,23 +65,22 @@ class DataUpdater:
 
 		start, end = self.__getDates(2)
 
-		stockSymbols = openSymbolsFile(index)
-		indicesSymbols = openSymbolsFile('indices')
+		stockSymbols = open_symbols_file(index)
+		indicesSymbols = open_symbols_file('indices')
 
 		n = len(stockSymbols)
-		A = np.arange(0, n, n / 5)
-		A = np.array([int(i) for i in A])
+		A = np.arange(0, n, n / 5, dtype = int)
 
 		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(stockSymbols[A[-1]:])
 
-		T = [thrd.Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
-		T.append(thrd.Thread(target = self.__getHistoricalData, args = (indicesSymbols, start, end)))
+		T = [Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
+		T.append(Thread(target = self.__getHistoricalData, args = (indicesSymbols, start, end)))
 
 		print("Downloading historical data...")
 
 		n += len(indicesSymbols)
-		progressBar(0, n, prefix = 'Progress:', length = 50)
+		progress_bar(0, n, prefix = 'Progress:', length = 50)
 
 		start = time.time()
 
@@ -92,15 +91,15 @@ class DataUpdater:
 			t.join()'''
 
 		while len(os.listdir('hist_data')) != n:
-			progressBar(len(os.listdir('hist_data')), n, prefix = 'Progress:', length = 50)
+			progress_bar(len(os.listdir('hist_data')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
-		progressBar(n, n, prefix = 'Progress:', length = 50)
+		progress_bar(n, n, prefix = 'Progress:', length = 50)
 		print()
 
 		total_time = str(round(time.time() - start, 1))
 		files_count = str(len(os.listdir('hist_data')))
-		files_size = str(round(getDirectorySize('hist_data'), 2))
+		files_size = str(round(get_directory_size('hist_data'), 2))
 
 		print("Total " + files_count + " files in " + total_time + ' sec (' + files_size + ' MB)')
 
@@ -108,7 +107,7 @@ class DataUpdater:
 		if remove:
 			self.__removeData('financial_statements/')
 
-		stockSymbols = openSymbolsFile(index)
+		stockSymbols = open_symbols_file(index)
 
 		n = len(stockSymbols)
 		A = np.arange(0, n, n / 5)
@@ -117,7 +116,7 @@ class DataUpdater:
 		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(stockSymbols[A[-1]:])
 
-		T = [thrd.Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
+		T = [Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
 
 		print("Downloading financial statements...")
 
@@ -130,10 +129,10 @@ class DataUpdater:
 		n *= 2
 
 		while len(os.listdir('financial_statements')) != (n - 12):
-			progressBar(len(os.listdir('financial_statements')), n, prefix = 'Progress:', length = 50)
+			progress_bar(len(os.listdir('financial_statements')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.5)
 
-		progressBar(n, n, prefix = 'Progress:', length = 50)
+		progress_bar(n, n, prefix = 'Progress:', length = 50)
 		print()
 		print("Complete.")
 
@@ -148,7 +147,7 @@ def main():
 	d1.runStockDataUpdate('GSPC')
 	#d1.runFinancialStatementsUpdate('GSPC')
 
-	for _ in range(3):
+	for _ in range(2):
 		print('\a', end = '\r')
 
 if __name__ == '__main__':

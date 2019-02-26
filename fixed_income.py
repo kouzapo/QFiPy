@@ -10,7 +10,7 @@ from matplotlib import style
 
 style.use('ggplot')
 
-def getRiskFreeRate():
+def get_risk_free_rate():
 	RF = {}
 	D = pd.read_html('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield')[1]
 
@@ -35,7 +35,7 @@ def FV(P, i, n, contComp = False):
 	else:
 		return P * ((1 + i) ** n)
 
-def calcDiscountFactor(i, N, contComp = False):
+def calc_discount_factor(i, N, contComp = False):
 	if contComp:
 		return (1 / np.exp(N * i))
 	else:
@@ -43,7 +43,7 @@ def calcDiscountFactor(i, N, contComp = False):
 
 def graphYieldCurve():
 	maturities = [1/12, 2/12, 3/12, 6/12, 1, 2, 3, 5, 7, 10, 20, 30]
-	yields = list(getRiskFreeRate().values())
+	yields = list(get_risk_free_rate().values())
 
 	plt.plot(maturities, yields, linewidth = 1.5, color = 'blue', marker = 'o', label = 'Yield Curve')
 	plt.xlabel('Maturitiy (Years)')
@@ -53,25 +53,25 @@ def graphYieldCurve():
 	plt.show()
 
 class USTreasurySecurity():
-	def __init__(self, parValue, maturity):
-		self.parValue = parValue
+	def __init__(self, par_value, maturity):
+		self.par_value = par_value
 		self.maturity = maturity
 
 	def getParValue(self):
-		return self.parValue
+		return self.par_value
 
 	def getMaturity(self):
 		return self.maturity
 
 class ZeroCouponBond(USTreasurySecurity):
-	def __init__(self, parValue, maturity):
-		super().__init__(parValue, maturity)
+	def __init__(self, par_value, maturity):
+		super().__init__(par_value, maturity)
 
-	def calcDiscountYield(self, purchasePrice):
-		F = self.parValue
+	def calcDiscountYield(self, purchase_price):
+		F = self.par_value
 		n = self.maturity
 
-		y = (F / purchasePrice) ** (1 / n) - 1
+		y = (F / purchase_price) ** (1 / n) - 1
 
 		return round(y, 5)
 
@@ -79,25 +79,25 @@ class ZeroCouponBond(USTreasurySecurity):
 		pass
 
 class CouponBond(USTreasurySecurity):
-	def __init__(self, parValue, c, maturity, m = 2):
-		super().__init__(parValue, maturity)
+	def __init__(self, par_value, c, maturity, m = 2):
+		super().__init__(par_value, maturity)
 		self.c = c
 		self.m = m
 
 		self.periods = self.maturity * self.m
-		self.coupon = self.parValue * (self.c / self.m)
+		self.coupon = self.par_value * (self.c / self.m)
 
 	def getCoupon(self):
 		return self.coupon
 
-	def calcYieldToMaturity(self, purchasePrice):
+	def calcYieldToMaturity(self, purchase_price):
 		n = self.maturity * self.m
 		C = self.coupon
-		F = self.parValue
+		F = self.par_value
 
 		N = np.array([t for t in range(1, n + 1)])
 
-		fun = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + (F / (1 + y / self.m) ** n) - purchasePrice
+		fun = lambda y: (C * calc_discount_factor(y / self.m, N)).sum() + (F / (1 + y / self.m) ** n) - purchase_price
 		YTM = round(brentq(fun, 0.0001, 1), 5)
 
 		return YTM
@@ -105,21 +105,21 @@ class CouponBond(USTreasurySecurity):
 	def calcPrice(self, y):
 		n = self.periods
 		C = self.coupon
-		F = self.parValue
+		F = self.par_value
 
 		N = np.array([t for t in range(1, n + 1)])
 
-		P = (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+		P = (C * calc_discount_factor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
 
 		return round(P, 5)
 
 	def calcMacaulayDuration(self, y):
 		n = self.periods
 		C = self.coupon
-		F = self.parValue
+		F = self.par_value
 
 		N = np.array([t for t in range(1, n + 1)])
-		P = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+		P = lambda y: (C * calc_discount_factor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
 		deriv = derivative(P, x0 = y, dx = 1e-6, n = 1)
 
 		MacD = -(1 + y/self.m) * deriv / self.calcPrice(y)
@@ -134,10 +134,10 @@ class CouponBond(USTreasurySecurity):
 	def calcConvexity(self, y):
 		n = self.periods
 		C = self.coupon
-		F = self.parValue
+		F = self.par_value
 
 		N = np.array([t for t in range(1, n + 1)])
-		P = lambda y: (C * calcDiscountFactor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
+		P = lambda y: (C * calc_discount_factor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
 		deriv = derivative(P, x0 = y, dx = 1e-6, n = 2)
 
 		convexity = deriv / self.calcPrice(y)
@@ -149,10 +149,10 @@ class CouponBond(USTreasurySecurity):
 		convexity = self.calcConvexity(y)
 		P = self.calcPrice(y)
 
-		percentChange = -ModD * dx + 0.5 * convexity * dx ** 2
-		priceChange = P * percentChange
+		percent_change = -ModD * dx + 0.5 * convexity * dx ** 2
+		price_change = P * percent_change
 
-		return {'percent_change': round(percentChange, 5), 'price_change': round(priceChange, 5)}
+		return {'percent_change': round(percent_change, 5), 'price_change': round(price_change, 5)}
 
 	def graphPriceBehavior(self):
 		yields = np.arange(0.01, 0.5, 0.01)

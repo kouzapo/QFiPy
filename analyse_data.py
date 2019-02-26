@@ -4,15 +4,24 @@
 import time
 
 from utilities import *
-from monte_carlo import *
+from equities import *
+from stochastics import *
 from fixed_income import *
-from Stock import *
-from Option import *
-from Index import *
-from Portfolio import *
+from time_series_models import *
+from portfolio import *
 from update_data import *
 
 st = time.time()
+
+
+
+
+
+
+
+
+
+
 
 
 

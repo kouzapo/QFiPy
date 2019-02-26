@@ -7,9 +7,3 @@ def simulateRandomWalk(N):
 	R = np.array([-1 if i == 0 else i for i in R])
 
 	return np.concatenate((np.array([0]), R))
-
-def main():
-	pass
-
-if __name__ == '__main__':
-	main()
