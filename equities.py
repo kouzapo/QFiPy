@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
 from scipy import stats
 
 from bs4 import BeautifulSoup
@@ -13,7 +14,11 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib import style
 
+from time_series_models import OLS
+
 style.use('ggplot')
+
+register_matplotlib_converters()
 
 class Stock:
 	def __init__(self, quote, weight = 0):
@@ -67,25 +72,25 @@ class Stock:
 
 	def calcLogReturns(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
-		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
+		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
-		return np.array(logReturns)
+		return np.array(log_returns)
 
 	def calcExpReturn(self, annualized = True):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		if annualized:
-			return logReturns.mean() * 252
+			return log_returns.mean() * 252
 		else:
-			return logReturns.mean()
+			return log_returns.mean()
 
 	def calcStd(self, annualized = True):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		if annualized:
-			return logReturns.std() * np.sqrt(252)
+			return log_returns.std() * np.sqrt(252)
 		else:
-			return logReturns.std()
+			return log_returns.std()
 
 	def calcSkewness(self):
 		return stats.skew(self.calcLogReturns())
@@ -96,45 +101,68 @@ class Stock:
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
 
-	def calcAutocorr(self, lag):
-		logReturns = self.calcLogReturns()
+	def calcACF(self, lags):
+		log_returns = self.calcLogReturns()
 
-		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
+		return np.array([np.corrcoef(log_returns[lag:], log_returns[:-lag])[0][1] for lag in lags])
+
+	def calcPACF(self, lags):
+		log_returns = self.calcLogReturns()
+		regressor = OLS()
+
+		PACF = []
+
+		for lag in lags:
+			X = np.array([log_returns[i:-(lag - i)] for i in range(lag)]).T
+			y = log_returns[lag:]
+
+			regressor.fit(y, X)
+
+			PACF.append(regressor.coefs[1])
+
+		return np.array(PACF)
 
 	def calcBetaAlpha(self, benchmark):
-		stockReturns = self.calcLogReturns()
-		benchmarkReturns = benchmark.calcLogReturns()
+		stock_returns = self.calcLogReturns()
+		benchmark_returns = benchmark.calcLogReturns()
 
-		stockReturns = np.reshape(stockReturns, (len(stockReturns), 1))
-		benchmarkReturns = np.reshape(benchmarkReturns, (len(benchmarkReturns), 1))
+		benchmark_returns = np.reshape(benchmark_returns, (len(benchmark_returns), 1))
+
+		'''stock_returns = np.reshape(stock_returns, (len(stock_returns), 1))
+		benchmark_returns = np.reshape(benchmark_returns, (len(benchmark_returns), 1))
 
 		regressor = LinearRegression()
-		regressor.fit(benchmarkReturns, stockReturns)
+		regressor.fit(benchmark_returns, stock_returns)
 
-		return {'beta': regressor.coef_[0][0], 'alpha': regressor.intercept_[0]}
+		return {'alpha': regressor.intercept_[0], 'beta': regressor.coef_[0][0]}'''
+
+		regressor = OLS()
+		regressor.fit(stock_returns, benchmark_returns)
+
+		return {'alpha': regressor.coefs[0], 'beta': regressor.coefs[1]}
 
 	def calcSharpeRatio(self, rf):
 		return (self.calcExpReturn() - rf) / self.calcStd()
 
 	def calcVaR(self, c = 0.95):
-		logReturns = self.calcLogReturns()
-		logReturns.sort()
-		a = round(len(logReturns) * (1 - c))
+		log_returns = self.calcLogReturns()
+		log_returns.sort()
+		a = round(len(log_returns) * (1 - c))
 
-		return {'VaR': logReturns[a - 1], 'CVaR': logReturns[0:a - 1].mean()}
+		return {'VaR': log_returns[a - 1], 'CVaR': log_returns[0:a - 1].mean()}
 
 	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
 
 	def testStationarity(self, number_of_subsamples):
-		logReturns = self.calcLogReturns()
-		n = len(logReturns)
+		log_returns = self.calcLogReturns()
+		n = len(log_returns)
 
 		A = np.arange(0, n, n / number_of_subsamples)
 		A = np.array([int(i) for i in A])
 
-		subsamples = [logReturns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
-		subsamples.append(logReturns[A[-1]:])
+		subsamples = [log_returns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		subsamples.append(log_returns[A[-1]:])
 
 		results = [{'mean': round(subsample.mean(), 5), 'std': round(subsample.std(), 5)} for subsample in subsamples]
 
@@ -143,9 +171,9 @@ class Stock:
 
 	def descriptiveStats(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
-		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
+		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
-		desc = logReturns.describe()
+		desc = log_returns.describe()
 		skewness = self.calcSkewness()
 		kurtosis = self.calcKurtosis()
 
@@ -163,7 +191,7 @@ class Stock:
 
 	def graphPrice(self):
 		closeDF, dates = self.getPrices(return_dates = True)
-		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
+		rolling_mean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
 		volume = self.getVolume()
 
@@ -171,7 +199,7 @@ class Stock:
 		fig.autofmt_xdate()
 
 		ax1.plot(dates, closeDF, color = 'blue', linewidth = 1.8, label = "Price")
-		ax1.plot(dates, rollingMean, color = 'red', linewidth = 1.0, label = "Rolling Mean")
+		ax1.plot(dates, rolling_mean, color = 'red', linewidth = 1.0, label = "Rolling Mean")
 
 		ax2.bar(dates, volume, width = 2, color = 'blue', label = "Volume")
 
@@ -185,12 +213,12 @@ class Stock:
 		plt.show()
 
 	def graphLogReturns(self):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
-		ax1.plot(logReturns, color = 'blue', lw = 0.5)
-		ax2.hist(logReturns, bins = 40, color = 'blue')
+		ax1.plot(log_returns, color = 'blue', lw = 0.5)
+		ax2.hist(log_returns, bins = 40, color = 'blue')
 
 		ax1.set_ylabel("% Change", fontsize = 12)
 
@@ -201,10 +229,10 @@ class Stock:
 		plt.show()
 
 	def graphQQPlot(self):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 		R = np.arange(-3.3, 3.3, 0.1)
 
-		quantiles, LSFit = stats.probplot(logReturns, dist="norm")
+		quantiles, LSFit = stats.probplot(log_returns, dist="norm")
 
 		plt.scatter(quantiles[0], quantiles[1], color = 'blue', alpha = 0.5, label = 'Quantiles')
 		plt.plot(R, LSFit[0] * R + LSFit[1], color = 'red', label = 'Best Fit Line')
@@ -217,13 +245,13 @@ class Stock:
 		plt.show()
 
 	def graphCorrelation(self, benchmark):
-		stockReturns = self.calcLogReturns()
-		benchmarkReturns = benchmark.calcLogReturns()
-		B = self.calcBetaAlpha(benchmark)
-		corrcoef = self.calcCorrCoef(benchmark)
+		stock_returns = self.calcLogReturns()
+		benchmark_returns = benchmark.calcLogReturns()
 
-		plt.scatter(benchmarkReturns, stockReturns, color = 'blue', s = 23, alpha = 0.5, label = "Returns")
-		plt.plot(benchmarkReturns, B['beta'] * benchmarkReturns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")
+		B = self.calcBetaAlpha(benchmark)
+
+		plt.scatter(benchmark_returns, stock_returns, color = 'blue', s = 23, alpha = 0.5, label = "Returns")
+		plt.plot(benchmark_returns, B['beta'] * benchmark_returns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")
 
 		plt.ylabel(self.quote + " Log Returns", fontsize = 12)
 		plt.xlabel(benchmark.getQuote() + " Log Returns", fontsize = 12)
@@ -232,16 +260,39 @@ class Stock:
 
 		plt.show()
 
-	def graphAutocorrelation(self, max_lag):
-		R = np.arange(1, max_lag + 1, 1)
-		autocorr = np.array([self.calcAutocorr(l) for l in R])
+	def graphACF(self, max_lag, confidence = 0.05):
+		lags = np.arange(1, max_lag + 1, 1)
+		ACF = self.calcACF(lags)
 
-		plt.bar(R, autocorr, width = 0.3, color = 'blue', label = "Autocorrelation")
+		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
 
-		plt.ylabel('Autocorrelation')
+		plt.bar(lags, ACF, width = 0.7, color = 'blue', label = 'ACF')
+
+		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+
+		plt.ylabel('ACF')
 		plt.xlabel('Lag')
 		plt.legend(loc = 2)
-		plt.title('Autocorrelation for ' + self.quote, fontsize = 18)
+		plt.title('Autocorrelation Function for ' + self.quote, fontsize = 15)
+
+		plt.show()
+
+	def graphPACF(self, max_lag, confidence = 0.05):
+		lags = np.arange(1, max_lag + 1, 1)
+		PACF = self.calcPACF(lags)
+
+		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
+
+		plt.bar(lags, PACF, width = 0.5, color = 'blue', label = 'PACF')
+
+		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+
+		plt.ylabel('PACF')
+		plt.xlabel('Lag')
+		plt.legend(loc = 2)
+		plt.title('Partial Autocorrelation Function for ' + self.quote, fontsize = 15)
 
 		plt.show()
 
@@ -281,25 +332,25 @@ class Index:
 
 	def calcLogReturns(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
-		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
+		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
-		return np.array(logReturns)
+		return np.array(log_returns)
 
 	def calcExpReturn(self, annualized = True):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		if annualized:
-			return logReturns.mean() * 252
+			return log_returns.mean() * 252
 		else:
-			return logReturns.mean()
+			return log_returns.mean()
 
 	def calcStd(self, annualized = True):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		if annualized:
-			return logReturns.std() * np.sqrt(252)
+			return log_returns.std() * np.sqrt(252)
 		else:
-			return logReturns.std()
+			return log_returns.std()
 
 	def calcSkewness(self):
 		return stats.skew(self.calcLogReturns())
@@ -310,23 +361,39 @@ class Index:
 	def calcCorrCoef(self, asset):
 		return np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
 
-	def calcAutocorr(self, lag):
-		logReturns = self.calcLogReturns()
+	def calcACF(self, lags):
+		log_returns = self.calcLogReturns()
 
-		return np.corrcoef(logReturns[lag:], logReturns[:-lag])[0][1]
+		return np.array([np.corrcoef(log_returns[lag:], log_returns[:-lag])[0][1] for lag in lags])
+
+	def calcPACF(self, lags):
+		log_returns = self.calcLogReturns()
+		regressor = OLS()
+
+		PACF = []
+
+		for lag in lags:
+			X = np.array([log_returns[i:-(lag - i)] for i in range(lag)]).T
+			y = log_returns[lag:]
+
+			regressor.fit(y, X)
+
+			PACF.append(regressor.coefs[1])
+
+		return np.array(PACF)
 
 	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
 
 	def testStationarity(self, number_of_subsamples):
-		logReturns = self.calcLogReturns()
-		n = len(logReturns)
+		log_returns = self.calcLogReturns()
+		n = len(log_returns)
 
 		A = np.arange(0, n, n / number_of_subsamples)
 		A = np.array([int(i) for i in A])
 
-		subsamples = [logReturns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
-		subsamples.append(logReturns[A[-1]:])
+		subsamples = [log_returns[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		subsamples.append(log_returns[A[-1]:])
 
 		results = [{'mean': round(subsample.mean(), 5), 'std': round(subsample.std(), 5)} for subsample in subsamples]
 
@@ -335,9 +402,9 @@ class Index:
 
 	def descriptiveStats(self):
 		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
-		logReturns = np.log(closeDF / closeDF.shift(1)).dropna()
+		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
-		desc = logReturns.describe()
+		desc = log_returns.describe()
 		skewness = self.calcSkewness()
 		kurtosis = self.calcKurtosis()
 
@@ -355,7 +422,7 @@ class Index:
 
 	def graphPrice(self):
 		closeDF, dates = self.getPrices(return_dates = True)
-		rollingMean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
+		rolling_mean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
 		volume = self.getVolume()
 
@@ -363,7 +430,7 @@ class Index:
 		fig.autofmt_xdate()
 
 		ax1.plot(dates, closeDF, color = 'blue', linewidth = 1.8, label = "Price")
-		ax1.plot(dates, rollingMean, color = 'red', linewidth = 1.0, label = "Rolling Mean")
+		ax1.plot(dates, rolling_mean, color = 'red', linewidth = 1.0, label = "Rolling Mean")
 
 		ax2.bar(dates, volume, width = 2, color = 'blue', label = "Volume")
 
@@ -377,12 +444,12 @@ class Index:
 		plt.show()
 
 	def graphLogReturns(self):
-		logReturns = self.calcLogReturns()
+		log_returns = self.calcLogReturns()
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
-		ax1.plot(logReturns, color = 'blue', lw = 0.4)
-		ax2.hist(logReturns, bins = 40, color = 'blue')
+		ax1.plot(log_returns, color = 'blue', lw = 0.4)
+		ax2.hist(log_returns, bins = 40, color = 'blue')
 
 		ax1.set_ylabel("% Change", fontsize = 12)
 
@@ -391,31 +458,38 @@ class Index:
 		plt.suptitle(str(self.getQuote()) + " Log Returns", fontsize = 18)
 		plt.show()
 
-	def graphQQPlot(self):
-		logReturns = self.calcLogReturns()
-		R = np.arange(-3.3, 3.3, 0.1)
+	def graphACF(self, max_lag, confidence = 0.05):
+		lags = np.arange(1, max_lag + 1, 1)
+		ACF = self.calcACF(lags)
 
-		quantiles, LSFit = stats.probplot(logReturns, dist="norm")
+		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
 
-		plt.scatter(quantiles[0], quantiles[1], color = 'blue', alpha = 0.5, label = 'Quantiles')
-		plt.plot(R, LSFit[0] * R + LSFit[1], color = 'red', label = 'Best Fit Line')
+		plt.bar(lags, ACF, width = 0.7, color = 'blue', label = 'ACF')
 
-		plt.ylabel('Ordered Values')
-		plt.xlabel('Theoretical quantiles')
+		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+
+		plt.ylabel('ACF')
+		plt.xlabel('Lag')
 		plt.legend(loc = 2)
-		plt.title('Q-Q plot for ' + self.quote, fontsize = 18)
+		plt.title('Autocorrelation Function for ' + self.quote, fontsize = 15)
 
 		plt.show()
 
-	def graphAutocorrelation(self, max_lag):
-		R = np.arange(1, max_lag + 1, 1)
-		autocorr = np.array([self.calcAutocorr(l) for l in R])
+	def graphPACF(self, max_lag, confidence = 0.05):
+		lags = np.arange(1, max_lag + 1, 1)
+		PACF = self.calcPACF(lags)
 
-		plt.bar(R, autocorr, width = 0.3, color = 'blue', label = "Autocorrelation")
+		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
 
-		plt.ylabel('Autocorrelation')
+		plt.bar(lags, PACF, width = 0.5, color = 'blue', label = 'PACF')
+
+		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+
+		plt.ylabel('PACF')
 		plt.xlabel('Lag')
 		plt.legend(loc = 2)
-		plt.title('Autocorrelation for ' + self.quote, fontsize = 18)
+		plt.title('Partial Autocorrelation Function for ' + self.quote, fontsize = 15)
 
 		plt.show()
