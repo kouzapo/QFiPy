@@ -41,7 +41,7 @@ def calc_discount_factor(i, N, contComp = False):
 	else:
 		return (1 / ((1 + i) ** N))
 
-def graphYieldCurve():
+def graph_yield_curve():
 	maturities = [1/12, 2/12, 3/12, 6/12, 1, 2, 3, 5, 7, 10, 20, 30]
 	yields = list(get_risk_free_rate().values())
 
