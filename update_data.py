@@ -14,9 +14,6 @@ import pandas_datareader.data as pdr
 from utilities import open_symbols_file, get_directory_size, progress_bar
 
 class DataUpdater:
-	def __init__(self):
-		pass
-
 	def __getDates(self, years):
 		end = str(dt.datetime.now().year) + '-' + str(dt.datetime.now().month) + '-' + str(dt.datetime.now().day)
 		start = dt.datetime.now() - dt.timedelta(days = years * 365)

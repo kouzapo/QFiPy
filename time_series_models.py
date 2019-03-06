@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.optimize import minimize
 
-class OLS:
+class LeastSquares:
 	def __init__(self):
 		self.coefs = None
 
@@ -35,21 +35,18 @@ class AR:
 		self.p = p
 		self.asset = asset
 
-		self.coefs = None
+		self.params = None
 
-	def estimateCoefs(self):
-		R = self.asset.calcLogReturns()
+	def estimateParams(self):
 		p = self.p
+		log_returns = self.asset.calcLogReturns()
 
-		X = np.array([R[i:-(p - i)] for i in range(p)]).T
-		y = R[p:]
+		X = np.array([log_returns[i:-(p - i)] for i in range(p)]).T
+		X = np.flip(X, axis = 1)
 
-		reggresor = OLS()
-		reggresor.fit(y, X)
+		y = log_returns[p:]
 
-		self.coefs = reggresor.coefs
+		regressor = LeastSquares()
+		regressor.fit(y, X)
 
-
-
-
-
+		self.params = regressor.coefs

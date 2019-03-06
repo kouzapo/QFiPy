@@ -8,13 +8,13 @@ from scipy import stats
 from bs4 import BeautifulSoup
 import urllib3
 
-from sklearn.linear_model import LinearRegression
+#from sklearn.linear_model import LinearRegression
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib import style
 
-from time_series_models import OLS
+from time_series_models import LeastSquares
 
 style.use('ggplot')
 
@@ -92,7 +92,7 @@ class Index:
 
 	def calcPACF(self, lags):
 		log_returns = self.calcLogReturns()
-		regressor = OLS()
+		regressor = LeastSquares()
 
 		PACF = []
 
@@ -108,6 +108,44 @@ class Index:
 
 	def testNormality(self):
 		return stats.normaltest(self.calcLogReturns())
+
+	def testAutocorrelation(self, lags):
+		ACF = self.calcACF(lags)
+		n = len(self.calcLogReturns())
+
+		Q = []
+		p_values = []
+
+		for lag in lags:
+			autocorrs = ACF[:lag]
+			k = np.arange(1, len(lags[:lag]) + 1)
+
+			q = n * (n + 2) * ((autocorrs ** 2) / (n - k)).sum()
+			p = 1 - stats.chi2.cdf(q, lag)
+
+			Q.append(q)
+			p_values.append(p)
+
+		return (np.array(Q), np.array(p_values))
+
+	def testPartialAutocorrelation(self, lags):
+		PACF = self.calcPACF(lags)
+		n = len(self.calcLogReturns())
+
+		Q = []
+		p_values = []
+
+		for lag in lags:
+			partial_autocorrs = PACF[:lag]
+			k = np.arange(1, len(lags[:lag]) + 1)
+
+			q = n * (n + 2) * ((partial_autocorrs ** 2) / (n - k)).sum()
+			p = 1 - stats.chi2.cdf(q, lag)
+
+			Q.append(q)
+			p_values.append(p)
+
+		return (np.array(Q), np.array(p_values))
 
 	def testStationarity(self, number_of_subsamples):
 		log_returns = self.calcLogReturns()
@@ -279,7 +317,7 @@ class Stock(Index):
 
 		return {'alpha': regressor.intercept_[0], 'beta': regressor.coef_[0][0]}'''
 
-		regressor = OLS()
+		regressor = LeastSquares()
 		regressor.fit(stock_returns, benchmark_returns)
 
 		return {'alpha': regressor.coefs[0], 'beta': regressor.coefs[1]}
