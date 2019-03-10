@@ -227,7 +227,7 @@ class Index:
 		log_returns = self.calcLogReturns()
 		R = np.arange(-3.3, 3.3, 0.1)
 
-		quantiles, LSFit = stats.probplot(log_returns, dist="norm")
+		quantiles, LSFit = stats.probplot(log_returns, dist = "norm")
 
 		plt.scatter(quantiles[0], quantiles[1], color = 'blue', alpha = 0.5, label = 'Quantiles')
 		plt.plot(R, LSFit[0] * R + LSFit[1], color = 'red', label = 'Best Fit Line')
@@ -243,12 +243,12 @@ class Index:
 		lags = np.arange(1, max_lag + 1, 1)
 		ACF = self.calcACF(lags)
 
-		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
+		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
 
 		plt.bar(lags, ACF, width = 0.7, color = 'blue', label = 'ACF')
 
-		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
-		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [confidence_interval, confidence_interval], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-confidence_interval, -confidence_interval], color = 'red', linestyle = ':')
 
 		plt.ylabel('ACF')
 		plt.xlabel('Lag')
@@ -261,12 +261,12 @@ class Index:
 		lags = np.arange(1, max_lag + 1, 1)
 		PACF = self.calcPACF(lags)
 
-		limit = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
+		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
 
 		plt.bar(lags, PACF, width = 0.7, color = 'blue', label = 'PACF')
 
-		plt.plot([0, max_lag], [limit, limit], color = 'red', linestyle = ':')
-		plt.plot([0, max_lag], [-limit, -limit], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [confidence_interval, confidence_interval], color = 'red', linestyle = ':')
+		plt.plot([0, max_lag], [-confidence_interval, -confidence_interval], color = 'red', linestyle = ':')
 
 		plt.ylabel('PACF')
 		plt.xlabel('Lag')

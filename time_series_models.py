@@ -37,7 +37,7 @@ class AR:
 
 		self.params = None
 
-	def estimateParams(self):
+	def fit(self):
 		p = self.p
 		log_returns = self.asset.calcLogReturns()
 

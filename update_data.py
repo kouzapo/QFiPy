@@ -5,7 +5,7 @@ import os
 import sys
 import time
 import datetime as dt
-from threading import Thread, Lock
+from threading import Thread
 
 import numpy as np
 import pandas as pd
@@ -66,7 +66,7 @@ class DataUpdater:
 		indicesSymbols = open_symbols_file('indices')
 
 		n = len(stockSymbols)
-		A = np.arange(0, n, n / 5, dtype = int)
+		A = np.arange(0, n, n / 10, dtype = int)
 
 		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(stockSymbols[A[-1]:])
@@ -79,7 +79,7 @@ class DataUpdater:
 		n += len(indicesSymbols)
 		progress_bar(0, n, prefix = 'Progress:', length = 50)
 
-		start = time.time()
+		start = time.perf_counter()
 
 		for t in T:
 			t.start()
@@ -89,12 +89,12 @@ class DataUpdater:
 
 		while len(os.listdir('hist_data')) != n:
 			progress_bar(len(os.listdir('hist_data')), n, prefix = 'Progress:', length = 50)
-			time.sleep(0.5)
+			time.sleep(0.1)
 
 		progress_bar(n, n, prefix = 'Progress:', length = 50)
 		print()
 
-		total_time = str(round(time.time() - start, 1))
+		total_time = str(round(time.perf_counter() - start, 1))
 		files_count = str(len(os.listdir('hist_data')))
 		files_size = str(round(get_directory_size('hist_data'), 2))
 
