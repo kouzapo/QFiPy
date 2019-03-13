@@ -8,7 +8,7 @@ from equities import *
 from fixed_income import *
 from portfolio import *
 
-st = time.time()
+st = time.perf_counter()
 
 rf = 0.0266
 
@@ -26,12 +26,12 @@ print()
 print('Sharpe Ratio:', round(s.calcSharpeRatio(rf), 4))
 print('Beta:', round(s.calcBetaAlpha(I)['beta'], 4))
 
-s.graphPrice()
-s.graphLogReturns()
-s.graphQQPlot()
-s.graphCorrelation(I)
-s.graphACF(100)
-s.graphPACF(100)
+s.plotPrice()
+s.plotLogReturns()
+s.plotQQPlot()
+s.plotCorrelation(I)
+s.plotACF(100)
+s.plotPACF(100)
 
 #-----Portfolio-----
 stocks = [Stock('MCD'), Stock('KO'), Stock('HD'), Stock('WMT')]
@@ -46,8 +46,8 @@ portfolio.printSummary(portfolio.calcPerformance(rf))
 portfolio.maximizeSharpeRatio(rf)
 portfolio.printSummary(portfolio.calcPerformance(rf))
 
-portfolio.graphEfficientFrontier()
-portfolio.graphSimulatedRandomProtfolios(N = 1000)
+portfolio.plotEfficientFrontier()
+portfolio.plotSimulatedRandomProtfolios(N = 1000)
 
 #-----Fixed Income-----
 b = CouponBond(par_value = 1000, c = 0.09, maturity = 10)
@@ -64,6 +64,6 @@ print('Macaulay Duration:', b.calcMacaulayDuration(y = YTM))
 print('Modified Duration:', b.calcModifiedDuration(y = YTM))
 print('Convexity:', b.calcConvexity(y = YTM))
 
-b.graphPriceBehavior()
+b.plotPriceBehavior()
 
-print("Execution time: " + str(time.time() - st))
+print("Execution time: " + str(time.perf_counter() - st))

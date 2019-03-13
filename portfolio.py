@@ -219,7 +219,7 @@ class StockPortfolio:
 
 		print()
 
-	def graphEfficientFrontier(self, graph = True):
+	def plotEfficientFrontier(self, graph = True):
 		R = np.linspace(0.05, 0.35, 50)
 		rets, cov_matrix = self.__calcCovMatrix()
 
@@ -272,7 +272,7 @@ class StockPortfolio:
 
 		return results
 
-	def graphSimulatedRandomProtfolios(self, N):
+	def plotSimulatedRandomProtfolios(self, N):
 		simulated_portfolios = self.__generateRandomPortfolios(N)
 		rets, cov_matrix = self.__calcCovMatrix()
 

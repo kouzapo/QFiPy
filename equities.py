@@ -27,9 +27,6 @@ class Index:
 
 		self.quote = quote
 
-	def getQuote(self):
-		return self.quote
-
 	def getCurrentPrice(self):
 		http = urllib3.PoolManager()
 		urllib3.disable_warnings()
@@ -185,7 +182,7 @@ class Index:
 		print('50%\t', round(desc['50%'], 6))
 		print('75%\t', round(desc['75%'], 6))
 
-	def graphPrice(self):
+	def plotPrice(self):
 		closeDF, dates = self.getPrices(return_dates = True)
 		rolling_mean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
@@ -199,7 +196,7 @@ class Index:
 
 		ax2.bar(dates, volume, width = 2, color = 'blue', label = "Volume")
 
-		plt.suptitle(str(self.getQuote()) + " value movement and Volume", fontsize = 20)
+		plt.suptitle(str(self.quote) + " value movement and Volume", fontsize = 20)
 		ax1.set_ylabel("Price", fontsize = 12)
 		ax2.set_ylabel("Volume", fontsize = 12)
 		ax1.legend(loc = 2)
@@ -208,7 +205,7 @@ class Index:
 
 		plt.show()
 
-	def graphLogReturns(self):
+	def plotLogReturns(self):
 		log_returns = self.calcLogReturns()
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -220,10 +217,10 @@ class Index:
 
 		ax2.set_ylabel("Density", fontsize = 12)
 		ax2.set_xlabel("% Change", fontsize = 15)
-		plt.suptitle(str(self.getQuote()) + " Log Returns", fontsize = 18)
+		plt.suptitle(str(self.quote) + " Log Returns", fontsize = 18)
 		plt.show()
 
-	def graphQQPlot(self):
+	def plotQQPlot(self):
 		log_returns = self.calcLogReturns()
 		R = np.arange(-3.3, 3.3, 0.1)
 
@@ -239,7 +236,7 @@ class Index:
 
 		plt.show()
 
-	def graphACF(self, max_lag, confidence = 0.05):
+	def plotACF(self, max_lag, confidence = 0.05):
 		lags = np.arange(1, max_lag + 1, 1)
 		ACF = self.calcACF(lags)
 
@@ -257,7 +254,7 @@ class Index:
 
 		plt.show()
 
-	def graphPACF(self, max_lag, confidence = 0.05):
+	def plotPACF(self, max_lag, confidence = 0.05):
 		lags = np.arange(1, max_lag + 1, 1)
 		PACF = self.calcPACF(lags)
 
@@ -329,7 +326,7 @@ class Stock(Index):
 
 		return {'VaR': log_returns[a - 1], 'CVaR': log_returns[0:a - 1].mean()}
 
-	def graphCorrelation(self, benchmark):
+	def plotCorrelation(self, benchmark):
 		stock_returns = self.calcLogReturns()
 		benchmark_returns = benchmark.calcLogReturns()
 
@@ -339,8 +336,8 @@ class Stock(Index):
 		plt.plot(benchmark_returns, B['beta'] * benchmark_returns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")
 
 		plt.ylabel(self.quote + " Log Returns", fontsize = 12)
-		plt.xlabel(benchmark.getQuote() + " Log Returns", fontsize = 12)
+		plt.xlabel(benchmark.quote + " Log Returns", fontsize = 12)
 		plt.legend(loc = 2)
-		plt.title(self.quote + " aganinst " + benchmark.getQuote(), fontsize = 18)
+		plt.title(self.quote + " aganinst " + benchmark.quote, fontsize = 18)
 
 		plt.show()
