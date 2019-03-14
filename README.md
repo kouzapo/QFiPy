@@ -1,2 +1,2 @@
-# financial-modeling
+# SoloQ
 Financial markets modeling & Portfolio optimization
