@@ -22,7 +22,7 @@ register_matplotlib_converters()
 
 class Index:
 	def __init__(self, quote):
-		self.http = urllib3.PoolManager()
+		#self.__http = urllib3.PoolManager()
 		urllib3.disable_warnings()
 
 		self.quote = quote
@@ -38,7 +38,7 @@ class Index:
 		return float(J.text.replace(',', ''))
 
 	def getPrices(self, return_dates = False):
-		DF = pd.read_csv('hist_data/' + self.quote + '.dat')
+		DF = pd.read_csv('data/historical_data/' + self.quote + '.dat')
 
 		closeDF = DF['Adj Close']
 		dates = DF['Date']
@@ -49,10 +49,10 @@ class Index:
 			return np.array(closeDF)
 
 	def getVolume(self):
-		return np.array(pd.read_csv('hist_data/' + self.quote + '.dat')['Volume'])
+		return np.array(pd.read_csv('data/historical_data/' + self.quote + '.dat')['Volume'])
 
 	def calcLogReturns(self):
-		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
+		closeDF = pd.read_csv('data/historical_data/' + self.quote + '.dat')['Adj Close']
 		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		return np.array(log_returns)
@@ -163,7 +163,7 @@ class Index:
 		return (self.calcExpReturn() - rf) / self.calcStd()
 
 	def descriptiveStats(self):
-		closeDF = pd.read_csv('hist_data/' + self.quote + '.dat')['Adj Close']
+		closeDF = pd.read_csv('data/historical_data/' + self.quote + '.dat')['Adj Close']
 		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		desc = log_returns.describe()
@@ -276,7 +276,7 @@ class Stock(Index):
 	def __init__(self, quote, weight = 0):
 		Index.__init__(self, quote)
 
-		self.http = urllib3.PoolManager()
+		#self.http = urllib3.PoolManager()
 		urllib3.disable_warnings()
 
 		self.quote = quote
@@ -315,7 +315,7 @@ class Stock(Index):
 		return {'alpha': regressor.intercept_[0], 'beta': regressor.coef_[0][0]}'''
 
 		regressor = LeastSquares()
-		regressor.fit(stock_returns, benchmark_returns)
+		regressor.fit(benchmark_returns, stock_returns)
 
 		return {'alpha': regressor.coefs[0], 'beta': regressor.coefs[1]}
 

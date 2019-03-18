@@ -7,7 +7,7 @@ class LeastSquares:
 	def __init__(self):
 		self.coefs = None
 
-	def fit(self, y, X):
+	def fit(self, X, y):
 		I = np.ones(X.shape[0])
 		I = I.reshape((len(I), 1))
 
@@ -47,6 +47,6 @@ class AR:
 		y = log_returns[p:]
 
 		regressor = LeastSquares()
-		regressor.fit(y, X)
+		regressor.fit(X, y)
 
 		self.params = regressor.coefs
