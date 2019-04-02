@@ -36,7 +36,7 @@ class DataUpdater:
 			while True:
 				try:
 					histDF = pdr.DataReader(sym, 'yahoo', start, end)
-					histDF.to_csv('hist_data/' + sym + '.dat')
+					histDF.to_csv('data/historical_data/' + sym + '.dat')
 
 					break
 
@@ -58,9 +58,9 @@ class DataUpdater:
 
 	def runStockDataUpdate(self, index, remove = True):
 		if remove:
-			self.__removeData('hist_data/')
+			self.__removeData('data/historical_data/')
 
-		start, end = self.__getDates(2)
+		start, end = self.__getDates(3)
 
 		stockSymbols = open_symbols_file(index)
 		indicesSymbols = open_symbols_file('indices')
@@ -87,16 +87,16 @@ class DataUpdater:
 		'''for t in T:
 			t.join()'''
 
-		while len(os.listdir('hist_data')) != n:
-			progress_bar(len(os.listdir('hist_data')), n, prefix = 'Progress:', length = 50)
+		while len(os.listdir('data/historical_data/')) != n:
+			progress_bar(len(os.listdir('data/historical_data')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.1)
 
 		progress_bar(n, n, prefix = 'Progress:', length = 50)
 		print()
 
 		total_time = str(round(time.perf_counter() - start, 1))
-		files_count = str(len(os.listdir('hist_data')))
-		files_size = str(round(get_directory_size('hist_data'), 2))
+		files_count = str(len(os.listdir('data/historical_data')))
+		files_size = str(round(get_directory_size('data/historical_data'), 2))
 
 		print("Total " + files_count + " files in " + total_time + ' sec (' + files_size + ' MB)')
 
@@ -141,7 +141,7 @@ def main():
 	'''indexQuote = sys.argv[1]
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
-	d1.runStockDataUpdate('GSPC')
+	d1.runStockDataUpdate('DJI')
 	#d1.runFinancialStatementsUpdate('GSPC')
 
 	for _ in range(2):

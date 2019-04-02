@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from matplotlib import style
 
-from equities import *
+from equities import Stock, Index
 from fixed_income import get_risk_free_rate
 
 style.use('ggplot')
@@ -25,13 +25,13 @@ class StockPortfolio:
 		self.getStocks().append(stock)
 
 	def getStocksWeights(self):
-		return np.array([stock.getWeight() for stock in self.__stocks])
+		return np.array([stock.weight for stock in self.__stocks])
 
 	def __calcCovMatrix(self):
 		ret = {}
 
 		for stock in self.__stocks:
-			ret[stock.getQuote()] = stock.calcLogReturns()
+			ret[stock.quote] = stock.calcLogReturns()
 
 		ret = pd.DataFrame(ret)
 		cov_matrix = ret.cov()
@@ -205,7 +205,7 @@ class StockPortfolio:
 
 	def printSummary(self, res):
 		D = pd.DataFrame([self.getStocksWeights()], index = ['Allocation'])
-		D.columns = [stock.getQuote() for stock in self.getStocks()]
+		D.columns = [stock.quote for stock in self.getStocks()]
 
 		print('---------------------Portfolio Summary---------------------')
 		print(D,'\n')
@@ -260,7 +260,7 @@ class StockPortfolio:
 			weights = np.random.random(len(self.__stocks))
 			weights /= np.sum(weights)
 
-			quotes = [s.getQuote() for s in self.__stocks]
+			quotes = [s.quote for s in self.__stocks]
 			stocks = []
 			j = 0
 

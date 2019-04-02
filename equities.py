@@ -97,7 +97,7 @@ class Index:
 			X = np.array([log_returns[i:-(lag - i)] for i in range(lag)]).T
 			y = log_returns[lag:]
 
-			regressor.fit(y, X)
+			regressor.fit(X, y)
 
 			PACF.append(regressor.coefs[1])
 
@@ -281,9 +281,6 @@ class Stock(Index):
 
 		self.quote = quote
 		self.weight = weight
-
-	def getWeight(self):
-		return self.weight
 
 	def setWeight(self, weight):
 		self.weight = weight

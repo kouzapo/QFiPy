@@ -3,15 +3,22 @@
 
 import time
 
-from utilities import *
-from equities import *
-from stochastics import *
+'''from equities import *
 from fixed_income import *
+from derivatives import *
+from stochastics import *
 from time_series_models import *
 from portfolio import *
-from update_data import *
+from utilities import *'''
 
 st = time.perf_counter()
+
+
+
+
+
+
+
 
 
 

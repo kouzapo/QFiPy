@@ -19,7 +19,7 @@ def read_from_ser(fileName):
 	return obj
 
 def get_DJI_symbols():
-	f = open('DJI_symbols.dat', 'w')
+	f = open('data/symbols_files/DJI_symbols.dat', 'w')
 	DJI_list = pd.read_html('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
 
 	for symbol in DJI_list[1]['Symbol']:
@@ -28,7 +28,7 @@ def get_DJI_symbols():
 	f.close()
 
 def get_GSPC_symbols():
-	f = open('GSPC_symbols.dat', 'w')
+	f = open('data/symbols_files/GSPC_symbols.dat', 'w')
 	GSPC_list = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
 
 	for symbol in GSPC_list[0]['Symbol']:
@@ -37,7 +37,7 @@ def get_GSPC_symbols():
 	f.close()
 
 def get_GDAXI_symbols():
-	f = open('GDAXI_symbols.dat', 'w')
+	f = open('data/symbols_files/GDAXI_symbols.dat', 'w')
 	GDAXI_list = pd.read_html('https://en.wikipedia.org/wiki/DAX')
 
 	for symbol in GDAXI_list[2]['Ticker symbol']:
@@ -46,7 +46,7 @@ def get_GDAXI_symbols():
 	f.close()
 
 def open_symbols_file(index):
-	f = open(index + '_symbols.dat', 'r')
+	f = open('data/symbols_files/' + index + '_symbols.dat', 'r')
 	symbols = [symbol.strip() for symbol in f]
 
 	f.close()
