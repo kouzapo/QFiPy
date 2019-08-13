@@ -10,6 +10,10 @@ import datetime as dt
 import dill
 import pandas as pd
 
+__author__ = "Apostolos Anastasios Kouzoukos"
+__email__ = "kouzoukos97@gmail.com"
+__status__ = "Development"
+
 def write_to_ser(obj, filename):
 	"""
 	This function serializes an object and saves it to a file.

@@ -7,10 +7,6 @@ Historical data of stocks and indices are updated via the pandas_datareader pack
 Financal statements of stocks are also updated. The update has beed parallelized using threads.
 """
 
-__author__ = "Apostolos Anastasios Kouzoukos"
-__email__ = "kouzoukos97@gmail.com"
-__status__ = "Development"
-
 import os
 import sys
 import time
@@ -22,6 +18,10 @@ import pandas as pd
 import pandas_datareader.data as pdr
 
 from utilities import open_symbols_file, get_directory_size, progress_bar
+
+__author__ = "Apostolos Anastasios Kouzoukos"
+__email__ = "kouzoukos97@gmail.com"
+__status__ = "Development"
 
 class DataUpdater:
 	"""

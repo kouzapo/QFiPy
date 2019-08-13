@@ -8,6 +8,10 @@ from equities import *
 from fixed_income import *
 from portfolio import *
 
+__author__ = "Apostolos Anastasios Kouzoukos"
+__email__ = "kouzoukos97@gmail.com"
+__status__ = "Development"
+
 st = time.perf_counter()
 
 rf = 0.0266
