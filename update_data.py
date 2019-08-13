@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+This module contains classes that handle the data update efficiently.
+Historical data of stocks and indices are updated via the pandas_datareader package.
+Financal statements of stocks are also updated. The update has beed parallelized using threads.
+"""
+
+__author__ = "Apostolos Anastasios Kouzoukos"
+__email__ = "kouzoukos97@gmail.com"
+__status__ = "Development"
+
 import os
 import sys
 import time
@@ -14,7 +24,28 @@ import pandas_datareader.data as pdr
 from utilities import open_symbols_file, get_directory_size, progress_bar
 
 class DataUpdater:
+	"""
+	This class handles the update of historical data of stocks and indices and financial statements
+	of stocks.
+	"""
+
 	def __getDates(self, years):
+		"""
+		This private method accepts as parameter an integer and returns the current date and 
+		the date after the subtraction of (365 * years) days from today. Other methods use this 
+		dates to retrieve the historical data in this interval.
+
+		Parameters:
+		----------
+			years: int, the years to be substracted from the current date.
+
+		Returns:
+		-------
+			start: str, the date after the subtraction of (365 * years) days from today.
+
+			end: str, the current date.
+		"""
+
 		end = str(dt.datetime.now().year) + '-' + str(dt.datetime.now().month) + '-' + str(dt.datetime.now().day)
 		start = dt.datetime.now() - dt.timedelta(days = years * 365)
 		start = str(start.year) + '-' + str(start.month) + '-' + str(start.day)
@@ -22,6 +53,14 @@ class DataUpdater:
 		return start, end
 
 	def __removeData(self, directory):
+		"""
+		This private method removes the files from a directory.
+
+		Parameters:
+		----------
+			directory: str, the name of the directory.
+		"""
+
 		if not os.path.isdir(directory):
 			os.mkdir(directory)
 
@@ -31,8 +70,21 @@ class DataUpdater:
 			if os.path.isfile(path):
 				os.remove(path)
 
-	def __getHistoricalData(self, symList, start, end):
-		for sym in symList:
+	def __getHistoricalData(self, sym_list, start, end):
+		"""
+		This private method accepts a symbols list, a time interval and downloads the historical
+		data of the stocks iteratively and saves the files in .csv format.
+
+		Parameters:
+		----------
+			sym_list: list, a list of stock symbols.
+
+			start: str, the start of the time interval.
+
+			end: str, the end of time interval. 
+		"""
+
+		for sym in sym_list:
 			while True:
 				try:
 					histDF = pdr.DataReader(sym, 'yahoo', start, end)
@@ -44,8 +96,17 @@ class DataUpdater:
 					#print(sym)
 					pass
 
-	def __getFinancialStatements(self, symList):
-		for sym in symList:
+	def __getFinancialStatements(self, sym_list):
+		"""
+		This private method accepts a symbols list and downloads the latest financial statements
+		(income statement and balance sheet) iteratively and saves the files in .csv format.
+
+		Parameters:
+		----------
+			sym_list: list, a list of stock symbols.
+		"""
+
+		for sym in sym_list:
 			try:
 				income_statement = pd.read_html('https://finance.yahoo.com/quote/' + sym + '/financials?p=' + sym)[0][1]
 				balance_sheet = pd.DataFrame(pd.read_html('https://finance.yahoo.com/quote/' + sym + '/balance-sheet?p=' + sym)[0][1])
@@ -57,26 +118,40 @@ class DataUpdater:
 				pass
 
 	def runStockDataUpdate(self, index, remove = True):
+		"""
+		This method implements the parallelization of the historical data update of the stocks
+		of a specific index. It creates 10 threads, with each thread handling a portion of the 
+		whole symbols list. The historical data of major indices is also updated.
+		The threads proceed to download the data in parallel, speeding up the whole process.
+
+		Parameters:
+		----------
+			index: str, the symbol of the index.
+
+			remove: boolean, if True, the current data is deleted, else is being overwritten. 
+			Defaults to True.
+		"""
+
 		if remove:
 			self.__removeData('data/historical_data/')
 
 		start, end = self.__getDates(3)
 
-		stockSymbols = open_symbols_file(index)
-		indicesSymbols = open_symbols_file('indices')
+		stock_symbols = open_symbols_file(index)
+		indices_symbols = open_symbols_file('indices')
 
-		n = len(stockSymbols)
+		n = len(stock_symbols)
 		A = np.arange(0, n, n / 10, dtype = int)
 
-		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
-		S.append(stockSymbols[A[-1]:])
+		S = [stock_symbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		S.append(stock_symbols[A[-1]:])
 
 		T = [Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
-		T.append(Thread(target = self.__getHistoricalData, args = (indicesSymbols, start, end)))
+		T.append(Thread(target = self.__getHistoricalData, args = (indices_symbols, start, end)))
 
 		print("Downloading historical data...")
 
-		n += len(indicesSymbols)
+		n += len(indices_symbols)
 		progress_bar(0, n, prefix = 'Progress:', length = 50)
 
 		start = time.perf_counter()
@@ -98,20 +173,35 @@ class DataUpdater:
 		files_count = str(len(os.listdir('data/historical_data')))
 		files_size = str(round(get_directory_size('data/historical_data'), 2))
 
-		print("Total " + files_count + " files in " + total_time + ' sec (' + files_size + ' MB)')
+		print("Total {} files in {} sec ({} MB)".format(files_count, total_time, files_size))
 
 	def runFinancialStatementsUpdate(self, index, remove = True):
+		"""
+		This method implements the parallelization of the financial statements update of the stocks
+		of a specific index. It creates 10 threads, with each thread handling a portion of the 
+		whole symbols list. The threads proceed to download the data in parallel, 
+		speeding up the whole process.
+
+		Parameters:
+		----------
+			index: str, the symbol of the index.
+
+			remove: boolean, if True, the current data is deleted, else is being overwritten. 
+			Defaults to True.
+
+		"""
+
 		if remove:
 			self.__removeData('financial_statements/')
 
-		stockSymbols = open_symbols_file(index)
+		stock_symbols = open_symbols_file(index)
 
-		n = len(stockSymbols)
+		n = len(stock_symbols)
 		A = np.arange(0, n, n / 5)
 		A = np.array([int(i) for i in A])
 
-		S = [stockSymbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
-		S.append(stockSymbols[A[-1]:])
+		S = [stock_symbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
+		S.append(stock_symbols[A[-1]:])
 
 		T = [Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
 
