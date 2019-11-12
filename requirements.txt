@@ -1,0 +1,8 @@
+numpy
+scipy
+pandas
+pandas-datareader
+bs4
+lxml
+urllib3
+dill
