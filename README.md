@@ -1,5 +1,5 @@
 # QFiPy
-Portfolio optimization package in Python. It is based upon the Markowitz Modern
+Portfolio optimization package in Python. It is based upon Modern
 Portfolio Theory and uses numerical methods to optimize the performance of the portfolios
 given historical data.
 
