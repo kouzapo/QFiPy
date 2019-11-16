@@ -142,8 +142,8 @@ class DataUpdater:
 		S = [stock_symbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
 		S.append(stock_symbols[A[-1]:])
 
-		T = [Thread(target = self.__getHistoricalData, args = (s, start, end)) for s in S]
-		T.append(Thread(target = self.__getHistoricalData, args = (indices_symbols, start, end)))
+		T = [Thread(target = self.__get_historical_data, args = (s, start, end)) for s in S]
+		T.append(Thread(target = self.__get_historical_data, args = (indices_symbols, start, end)))
 
 		print("Downloading historical data...")
 
