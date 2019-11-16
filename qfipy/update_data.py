@@ -30,7 +30,7 @@ class DataUpdater:
 	of stocks.
 	"""
 
-	def __getDates(self, years):
+	def __get_dates(self, years):
 		"""
 		This private method accepts as parameter an integer and returns the current date and 
 		the date after the subtraction of (365 * years) days from today. Other methods use this 
@@ -51,7 +51,7 @@ class DataUpdater:
 
 		return start, end
 
-	def __removeData(self, directory):
+	def __remove_data(self, directory):
 		"""
 		This private method removes the files from a directory.
 
@@ -69,7 +69,7 @@ class DataUpdater:
 			if os.path.isfile(path):
 				os.remove(path)
 
-	def __getHistoricalData(self, sym_list, start, end):
+	def __get_historical_data(self, sym_list, start, end):
 		"""
 		This private method accepts a symbols list, a time interval and downloads the historical
 		data of the stocks iteratively and saves the files in .csv format.
@@ -93,7 +93,7 @@ class DataUpdater:
 					print(sym)
 					#pass
 
-	def __getFinancialStatements(self, sym_list):
+	def __get_financial_statements(self, sym_list):
 		"""
 		This private method accepts a symbols list and downloads the latest financial statements
 		(income statement and balance sheet) iteratively and saves the files in .csv format.
@@ -114,7 +114,7 @@ class DataUpdater:
 			except Exception:
 				pass
 
-	def runStockDataUpdate(self, index, remove = True):
+	def run_stock_data_update(self, index, remove = True):
 		"""
 		This method implements the parallelization of the historical data update of the stocks
 		of a specific index. It creates 10 threads, with each thread handling a portion of the 
@@ -129,9 +129,9 @@ class DataUpdater:
 		"""
 
 		if remove:
-			self.__removeData('data/historical_data/')
+			self.__remove_data('data/historical_data/')
 
-		start, end = self.__getDates(3)
+		start, end = self.__get_dates(3)
 
 		stock_symbols = open_symbols_file(index)
 		indices_symbols = open_symbols_file('indices')
@@ -172,7 +172,7 @@ class DataUpdater:
 
 		print("Total {} files in {} sec ({} MB)".format(files_count, total_time, files_size))
 
-	def runFinancialStatementsUpdate(self, index, remove = True):
+	def run_financial_statements_update(self, index, remove = True):
 		"""
 		This method implements the parallelization of the financial statements update of the stocks
 		of a specific index. It creates 10 threads, with each thread handling a portion of the 
@@ -187,7 +187,7 @@ class DataUpdater:
 		"""
 
 		if remove:
-			self.__removeData('financial_statements/')
+			self.__remove_data('financial_statements/')
 
 		stock_symbols = open_symbols_file(index)
 
@@ -226,7 +226,7 @@ def main():
 	'''indexQuote = sys.argv[1]
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
-	d1.runStockDataUpdate('GSPC')
+	d1.run_stock_data_update('GSPC')
 	#d1.runFinancialStatementsUpdate('GSPC')
 
 	for _ in range(2):

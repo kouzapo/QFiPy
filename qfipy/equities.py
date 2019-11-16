@@ -50,7 +50,7 @@ class Index:
 
 		self.quote = quote
 
-	def getCurrentPrice(self):
+	def get_current_price(self):
 		"""
 		This method returns the current price of an asset based on the price 
 		indicated by Yahoo Finance. It makes an http request.
@@ -65,7 +65,7 @@ class Index:
 
 		return float(J.text.replace(',', ''))
 
-	def getPrices(self, return_dates = False):
+	def get_prices(self, return_dates = False):
 		"""
 		This method opens the historical price data file of the asset 
 		and returns a time series of the adjusting closing prices.
@@ -92,7 +92,7 @@ class Index:
 		else:
 			return close_prices
 
-	def getVolume(self):
+	def get_volume(self):
 		"""
 		This method returns a time series of the daily volume.
 
@@ -107,7 +107,7 @@ class Index:
 
 		#return np.array(pd.read_csv('data/historical_data/' + self.quote + '.dat')['Volume'])
 
-	def calcLogReturns(self):
+	def calc_log_returns(self):
 		"""
 		This method calculates the log returns of the asset based on daily historical
 		closing prices. Many other methods and calculations are based on this time series.
@@ -122,7 +122,7 @@ class Index:
 
 		return log_returns
 
-	def calcExpReturn(self, annualized = True):
+	def calc_exp_return(self, annualized = True):
 		"""
 		This method calculates the daily expected return of the asset based 
 		on the historical returns. The annualized return is also possible to calculate.
@@ -137,7 +137,7 @@ class Index:
 			exp_return: float, the expected return (daily or annualized).
 		"""
 
-		log_returns = self.calcLogReturns()
+		log_returns = self.calc_log_returns()
 
 		if annualized:
 			exp_return = log_returns.mean() * 252
@@ -146,7 +146,7 @@ class Index:
 
 		return exp_return
 
-	def calcStd(self, annualized = True):
+	def calc_std(self, annualized = True):
 		"""
 		This method calculates the daily standard deviation of an asset based on the 
 		historical returns. The annualized return is also possible to calculate.
@@ -161,7 +161,7 @@ class Index:
 			standard_dev: float, the standard deviation (daily or annualized).
 		"""
 
-		log_returns = self.calcLogReturns()
+		log_returns = self.calc_log_returns()
 
 		if annualized:
 			standard_dev = log_returns.std() * np.sqrt(252)
@@ -170,7 +170,7 @@ class Index:
 
 		return standard_dev
 
-	def calcSkewness(self):
+	def calc_skewness(self):
 		"""
 		This method calculates the skewness of the asset based on the historical returns.
 
@@ -179,11 +179,11 @@ class Index:
 			skewness: float, the skewness.
 		"""
 
-		skewness = stats.skew(self.calcLogReturns())
+		skewness = stats.skew(self.calc_log_returns())
 
 		return skewness
 
-	def calcKurtosis(self):
+	def calc_kurtosis(self):
 		"""
 		This method calculates the kurtosis of the asset based on the historical returns.
 
@@ -192,11 +192,11 @@ class Index:
 			kurtosis: float, the kurtosis.
 		"""
 
-		kurtosis = stats.kurtosis(self.calcLogReturns())
+		kurtosis = stats.kurtosis(self.calc_log_returns())
 
 		return kurtosis
 
-	def calcCorrCoef(self, asset):
+	def calc_corr_coef(self, asset):
 		"""
 		This method calculates the correlation coefficient between two assets. 
 		Both assets must have a calcLogReturns method, thus the asset object
@@ -212,11 +212,11 @@ class Index:
 			corr_coef: float, the correlation coefficient between the two assets.
 		"""
 
-		corr_coef = np.corrcoef(self.calcLogReturns(), asset.calcLogReturns())[0][1]
+		corr_coef = np.corrcoef(self.calc_log_returns(), asset.calc_log_returns())[0][1]
 
 		return corr_coef
 
-	def calcACF(self, lags):
+	def calc_ACF(self, lags):
 		"""
 		This method calculates the autocorreation of the asset up to a predefined lag.
 
@@ -229,13 +229,13 @@ class Index:
 			acf: ndarray, a numpy array of the autocorrelations.
 		"""
 
-		log_returns = self.calcLogReturns()
+		log_returns = self.calc_log_returns()
 
 		acf = np.array([np.corrcoef(log_returns[lag:], log_returns[:-lag])[0][1] for lag in lags])
 
 		return acf
 
-	def calcPACF(self, lags):
+	def calc_PACF(self, lags):
 		"""
 		This method calculates the partial autocorreation of the asset up to a predefined lag.
 
@@ -248,7 +248,7 @@ class Index:
 			pacf: ndarray, a numpy array of the partial autocorrelations.
 		"""
 
-		log_returns = self.calcLogReturns()
+		log_returns = self.calc_log_returns()
 		regressor = LeastSquares()
 
 		pacf = []
@@ -265,7 +265,7 @@ class Index:
 
 		return pacf
 
-	def testNormality(self):
+	def test_normality(self):
 		"""
 		This method returns the t-statistic and the p-value of the normality test of the
 		asset's returns. 
@@ -275,17 +275,17 @@ class Index:
 			results: ndarray, a numpy array of the normality test results.
 		"""
 
-		results = stats.normaltest(self.calcLogReturns())
+		results = stats.normaltest(self.calc_log_returns())
 
 		return results
 
-	def testAutocorrelation(self, lags):
+	def test_autocorrelation(self, lags):
 		"""
 
 		"""
 
-		ACF = self.calcACF(lags)
-		n = len(self.calcLogReturns())
+		ACF = self.calc_ACF(lags)
+		n = len(self.calc_log_returns())
 
 		Q = []
 		p_values = []
@@ -302,9 +302,9 @@ class Index:
 
 		return (np.array(Q), np.array(p_values))
 
-	def testPartialAutocorrelation(self, lags):
-		PACF = self.calcPACF(lags)
-		n = len(self.calcLogReturns())
+	def test_partial_autocorrelation(self, lags):
+		PACF = self.calc_PACF(lags)
+		n = len(self.calc_log_returns())
 
 		Q = []
 		p_values = []
@@ -321,8 +321,8 @@ class Index:
 
 		return (np.array(Q), np.array(p_values))
 
-	def testStationarity(self, number_of_subsamples):
-		log_returns = self.calcLogReturns()
+	def test_stationarity(self, number_of_subsamples):
+		log_returns = self.calc_log_returns()
 		n = len(log_returns)
 
 		A = np.arange(0, n, n / number_of_subsamples)
@@ -336,16 +336,16 @@ class Index:
 		for i in results:
 			print(i)
 
-	def calcSharpeRatio(self, rf):
-		return (self.calcExpReturn() - rf) / self.calcStd()
+	def calc_sharpe_ratio(self, rf):
+		return (self.calc_exp_return() - rf) / self.calc_std()
 
-	def descriptiveStats(self):
+	def descriptive_stats(self):
 		closeDF = pd.read_csv('data/historical_data/' + self.quote + '.dat')['Adj Close']
 		log_returns = np.log(closeDF / closeDF.shift(1)).dropna()
 
 		desc = log_returns.describe()
-		skewness = self.calcSkewness()
-		kurtosis = self.calcKurtosis()
+		skewness = self.calc_skewness()
+		kurtosis = self.calc_kurtosis()
 
 		print('-----Descriptive Statistics for ' + self.quote + '-----')
 		print('count\t', desc['count'])
@@ -359,11 +359,11 @@ class Index:
 		print('50%\t', round(desc['50%'], 6))
 		print('75%\t', round(desc['75%'], 6))
 
-	def plotPrice(self):
-		closeDF, dates = self.getPrices(return_dates = True)
+	def plot_price(self):
+		closeDF, dates = self.get_prices(return_dates = True)
 		rolling_mean = pd.DataFrame(closeDF).rolling(window = 60, min_periods = 0).mean()
 		dates = pd.to_datetime(dates)
-		volume = self.getVolume()
+		volume = self.get_volume()
 
 		fig, (ax1, ax2) = plt.subplots(2, sharex = True, gridspec_kw = {'height_ratios': [4, 1]})
 		fig.autofmt_xdate()
@@ -382,8 +382,8 @@ class Index:
 
 		plt.show()
 
-	def plotLogReturns(self):
-		log_returns = self.calcLogReturns()
+	def plot_log_returns(self):
+		log_returns = self.calc_log_returns()
 
 		fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -397,8 +397,8 @@ class Index:
 		plt.suptitle(str(self.quote) + " Log Returns", fontsize = 18)
 		plt.show()
 
-	def plotQQPlot(self):
-		log_returns = self.calcLogReturns()
+	def plot_QQPlot(self):
+		log_returns = self.calc_log_returns()
 		R = np.arange(-3.3, 3.3, 0.1)
 
 		quantiles, LSFit = stats.probplot(log_returns, dist = "norm")
@@ -413,11 +413,11 @@ class Index:
 
 		plt.show()
 
-	def plotACF(self, max_lag, confidence = 0.05):
+	def plot_ACF(self, max_lag, confidence = 0.05):
 		lags = np.arange(1, max_lag + 1, 1)
-		ACF = self.calcACF(lags)
+		ACF = self.calc_ACF(lags)
 
-		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
+		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calc_log_returns()))
 
 		plt.bar(lags, ACF, width = 0.7, color = 'blue', label = 'ACF')
 
@@ -431,11 +431,11 @@ class Index:
 
 		plt.show()
 
-	def plotPACF(self, max_lag, confidence = 0.05):
+	def plot_PACF(self, max_lag, confidence = 0.05):
 		lags = np.arange(1, max_lag + 1, 1)
-		PACF = self.calcPACF(lags)
+		PACF = self.calc_PACF(lags)
 
-		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calcLogReturns()))
+		confidence_interval = stats.norm.ppf(1 - confidence / 2) / np.sqrt(len(self.calc_log_returns()))
 
 		plt.bar(lags, PACF, width = 0.7, color = 'blue', label = 'PACF')
 
@@ -459,24 +459,24 @@ class Stock(Index):
 		self.quote = quote
 		self.weight = weight
 
-	def setWeight(self, weight):
+	def set_weight(self, weight):
 		self.weight = weight
 
-	def getIncomeStatement(self):
+	def ge_income_statement(self):
 		return pd.read_csv('financial_statements/inc_' + self.quote + '.dat')
 
-	def getBalanceSheet(self):
+	def get_balance_sheet(self):
 		return pd.read_csv('financial_statements/bal_' + self.quote + '.dat')
 
-	def calcIndicators(self):
-		income_statement = self.getIncomeStatement()
-		balance_sheet = self.getBalanceSheet()
+	def calc_indicators(self):
+		income_statement = self.get_income_statement()
+		balance_sheet = self.get_balance_sheet()
 
 		print(balance_sheet.iloc[7])
 
-	def calcBetaAlpha(self, benchmark):
-		stock_returns = self.calcLogReturns()
-		benchmark_returns = benchmark.calcLogReturns()
+	def calc_beta_alpha(self, benchmark):
+		stock_returns = self.calc_log_returns()
+		benchmark_returns = benchmark.calc_log_returns()
 
 		benchmark_returns = np.reshape(benchmark_returns, (len(benchmark_returns), 1))
 
@@ -493,18 +493,18 @@ class Stock(Index):
 
 		return {'alpha': regressor.coefs[0], 'beta': regressor.coefs[1]}
 
-	def calcVaR(self, c = 0.95):
-		log_returns = self.calcLogReturns()
+	def calc_VaR(self, c = 0.95):
+		log_returns = self.calc_log_returns()
 		log_returns.sort()
 		a = round(len(log_returns) * (1 - c))
 
 		return {'VaR': log_returns[a - 1], 'CVaR': log_returns[0:a - 1].mean()}
 
-	def plotCorrelation(self, benchmark):
-		stock_returns = self.calcLogReturns()
-		benchmark_returns = benchmark.calcLogReturns()
+	def plot_correlation(self, benchmark):
+		stock_returns = self.calc_log_returns()
+		benchmark_returns = benchmark.calc_log_returns()
 
-		B = self.calcBetaAlpha(benchmark)
+		B = self.calc_beta_alpha(benchmark)
 
 		plt.scatter(benchmark_returns, stock_returns, color = 'blue', s = 23, alpha = 0.5, label = "Returns")
 		plt.plot(benchmark_returns, B['beta'] * benchmark_returns + B['alpha'], color = 'red', linewidth = 2, label = "Fitting line")

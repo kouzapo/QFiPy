@@ -115,7 +115,7 @@ class ZeroCouponBond(USTreasurySecurity):
 
 		super().__init__(par_value, maturity)
 
-	def calcDiscountYield(self, purchase_price):
+	def calc_discount_yield(self, purchase_price):
 		"""
 		This method calculates the discount yield of a zero coupon bond based
 		on the purchase price.
@@ -164,7 +164,7 @@ class CouponBond(USTreasurySecurity):
 		self.periods = self.maturity * self.m
 		self.coupon = self.par_value * (self.c / self.m)
 
-	def calcYieldToMaturity(self, purchase_price):
+	def calc_yield_to_maturity(self, purchase_price):
 		"""
 		This method calculates the yield to maturity given the purchase price.
 		This is an optimization problem solved with the brentq function of scipy.optimize.
@@ -188,7 +188,7 @@ class CouponBond(USTreasurySecurity):
 
 		return YTM
 
-	def calcPrice(self, y):
+	def calc_price(self, y):
 		"""
 		This method calculates the price of a coupon bond based on a yield.
 
@@ -211,7 +211,7 @@ class CouponBond(USTreasurySecurity):
 
 		return price
 
-	def calcMacaulayDuration(self, y):
+	def calc_macaulay_duration(self, y):
 		"""
 		This method calculates the Macaulay duration of a coupon bond based on a yield.
 
@@ -231,12 +231,12 @@ class CouponBond(USTreasurySecurity):
 		P = lambda y: (C * calc_discount_factor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
 		deriv = derivative(P, x0 = y, dx = 1e-6, n = 1)
 
-		MacD = -(1 + y/self.m) * deriv / self.calcPrice(y)
+		MacD = -(1 + y/self.m) * deriv / self.calc_price(y)
 		MacD = round(MacD, 5)
 
 		return MacD
 
-	def calcModifiedDuration(self, y):
+	def calc_modified_duration(self, y):
 		"""
 		This method calculates the modified duration of a coupon bond based on a yield.
 
@@ -248,12 +248,12 @@ class CouponBond(USTreasurySecurity):
 			modified_duration: float, the modified duration based on the given yield.
 		"""
 
-		MacD = self.calcMacaulayDuration(y)
+		MacD = self.calc_macaulay_duration(y)
 		modified_duration = round(MacD / ((1 + y / self.m)), 5)
 
 		return modified_duration
 
-	def calcConvexity(self, y):
+	def calc_convexity(self, y):
 		"""
 		This method calculates the convexity of a coupon bond based on a yield.
 		
@@ -273,7 +273,7 @@ class CouponBond(USTreasurySecurity):
 		P = lambda y: (C * calc_discount_factor(y / self.m, N)).sum() + F / (1 + y / self.m) ** n
 		deriv = derivative(P, x0 = y, dx = 1e-6, n = 2)
 
-		convexity = deriv / self.calcPrice(y)
+		convexity = deriv / self.calc_price(y)
 		convexity = round(convexity, 5)
 
 		return convexity
@@ -288,13 +288,13 @@ class CouponBond(USTreasurySecurity):
 
 		return {'percent_change': round(percent_change, 5), 'price_change': round(price_change, 5)}'''
 
-	def plotPriceBehavior(self):
+	def plot_price_behavior(self):
 		"""
 		This method plots the price behavior of the security based on random yields.
 		"""
 
 		yields = np.arange(0.01, 0.5, 0.01)
-		prices = np.array([self.calcPrice(y) for y in yields])
+		prices = np.array([self.calc_price(y) for y in yields])
 
 		plt.plot(yields, prices, color = 'blue', linewidth = 2.0, label = 'Price vs Yield')
 		plt.xlabel('Yield')
