@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import pandas_datareader.data as pdr
 
-from utilities import open_symbols_file, get_directory_size, progress_bar
+from qfipy.utilities import open_symbols_file, get_directory_size, progress_bar
 
 __author__ = "Apostolos Kouzoukos"
 __license__ = "MIT"
@@ -171,52 +171,6 @@ class DataUpdater:
 		files_size = str(round(get_directory_size('data/historical_data'), 2))
 
 		print("Total {} files in {} sec ({} MB)".format(files_count, total_time, files_size))
-
-	def run_financial_statements_update(self, index, remove = True):
-		"""
-		This method implements the parallelization of the financial statements update of the stocks
-		of a specific index. It creates 10 threads, with each thread handling a portion of the 
-		whole symbols list. The threads proceed to download the data in parallel, 
-		speeding up the whole process.
-
-		Parameters:
-		----------
-			index: str, the symbol of the index.
-			remove: boolean, if True, the current data is deleted, else is being overwritten. 
-			Defaults to True.
-		"""
-
-		if remove:
-			self.__remove_data('financial_statements/')
-
-		stock_symbols = open_symbols_file(index)
-
-		n = len(stock_symbols)
-		A = np.arange(0, n, n / 5)
-		A = np.array([int(i) for i in A])
-
-		S = [stock_symbols[A[i]:A[i + 1]] for i in range(len(A) - 1)]
-		S.append(stock_symbols[A[-1]:])
-
-		T = [Thread(target = self.__getFinancialStatements, args = (s, )) for s in S]
-
-		print("Downloading financial statements...")
-
-		for t in T:
-			t.start()
-
-		'''for t in T:
-			t.join()'''
-
-		n *= 2
-
-		while len(os.listdir('financial_statements')) != (n - 12):
-			progress_bar(len(os.listdir('financial_statements')), n, prefix = 'Progress:', length = 50)
-			time.sleep(0.5)
-
-		progress_bar(n, n, prefix = 'Progress:', length = 50)
-		print()
-		print("Complete.")
 
 def main():
 	#os.system('cls')
