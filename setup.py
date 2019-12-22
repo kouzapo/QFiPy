@@ -11,6 +11,7 @@ setup(
 	author_email = 'kouzoukos97@gmail.com',
 	url = 'https://github.com/kouzapo/QFiPy',
 	packages = find_packages(),
+	package_data = {'qfipy': ['data/symbols_files/*.dat']},
 	classifiers=[
         'Programming Language :: Python',
         'Operating System :: Microsoft :: Windows',
