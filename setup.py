@@ -10,7 +10,8 @@ setup(
 	author = 'Apostolos Kouzoukos',
 	author_email = 'kouzoukos97@gmail.com',
 	url = 'https://github.com/kouzapo/QFiPy',
-	packages = find_packages(),
+	packages = ['qfipy'],
+    package_dir = {'qfipy': 'qfipy'},
 	package_data = {'qfipy': ['data/symbols_files/*.dat']},
 	classifiers=[
         'Programming Language :: Python',
@@ -22,6 +23,4 @@ setup(
         'Programming Language :: Python :: 3.7',
         ],
     install_requires = ['numpy', 'scipy', 'pandas', 'pandas-datareader']
-
-
 )
