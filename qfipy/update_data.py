@@ -85,34 +85,13 @@ class DataUpdater:
 			while True:
 				try:
 					histDF = pdr.DataReader(sym, 'yahoo', start, end)
-					histDF.to_csv('data/historical_data/' + sym + '.dat')
+					histDF.to_csv('historical_data/' + sym + '.dat')
 
 					break
 
 				except Exception:
 					print(sym)
 					#pass
-
-	def __get_financial_statements(self, sym_list):
-		"""
-		This private method accepts a symbols list and downloads the latest financial statements
-		(income statement and balance sheet) iteratively and saves the files in .csv format.
-
-		Parameters:
-		----------
-			sym_list: list, a list of stock symbols.
-		"""
-
-		for sym in sym_list:
-			try:
-				income_statement = pd.read_html('https://finance.yahoo.com/quote/' + sym + '/financials?p=' + sym)[0][1]
-				balance_sheet = pd.DataFrame(pd.read_html('https://finance.yahoo.com/quote/' + sym + '/balance-sheet?p=' + sym)[0][1])
-
-				income_statement.to_csv('financial_statements/inc_' + sym + '.dat', index = False)
-				balance_sheet.to_csv('financial_statements/bal_' + sym + '.dat', index = False)
-
-			except Exception:
-				pass
 
 	def run_stock_data_update(self, index, remove = True):
 		"""
@@ -129,7 +108,7 @@ class DataUpdater:
 		"""
 
 		if remove:
-			self.__remove_data('data/historical_data/')
+			self.__remove_data('historical_data/')
 
 		start, end = self.__get_dates(3)
 
@@ -159,16 +138,16 @@ class DataUpdater:
 		'''for t in T:
 			t.join()'''
 
-		while len(os.listdir('data/historical_data/')) != n:
-			progress_bar(len(os.listdir('data/historical_data')), n, prefix = 'Progress:', length = 50)
+		while len(os.listdir('historical_data/')) != n:
+			progress_bar(len(os.listdir('historical_data')), n, prefix = 'Progress:', length = 50)
 			time.sleep(0.1)
 
 		progress_bar(n, n, prefix = 'Progress:', length = 50)
 		print()
 
 		total_time = str(round(time.perf_counter() - start, 1))
-		files_count = str(len(os.listdir('data/historical_data')))
-		files_size = str(round(get_directory_size('data/historical_data'), 2))
+		files_count = str(len(os.listdir('historical_data')))
+		files_size = str(round(get_directory_size('historical_data'), 2))
 
 		print("Total {} files in {} sec ({} MB)".format(files_count, total_time, files_size))
 
