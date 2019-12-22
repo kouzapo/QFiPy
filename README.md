@@ -11,13 +11,6 @@ git clone https://github.com/kouzapo/QFiPy.git
 python setup.py install
 ```
 
-## Examples
-QFiPy is able to download historical data efficiently.
-
-```
-from qfipy.update_data import DataUpdater
-```
-
 ## Authors
 
 * **Apostolos Kouzoukos** - [GitHub](https://github.com/kouzapo)
