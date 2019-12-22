@@ -4,7 +4,7 @@ Portfolio Theory and uses numerical methods to optimize the performance of the p
 given historical data.
 
 ## Installing
-Clone the project and run the setup.py file
+Clone the project and run the setup.py file.
 
 ```
 git clone https://github.com/kouzapo/QFiPy.git
@@ -12,7 +12,11 @@ python setup.py install
 ```
 
 ## Examples
+QFiPy is able to download historical data efficiently.
 
+```
+from qfipy.update_data import DataUpdater
+```
 
 ## Authors
 
