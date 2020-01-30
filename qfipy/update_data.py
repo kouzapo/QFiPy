@@ -159,7 +159,7 @@ def main():
 	'''indexQuote = sys.argv[1]
 	DataUpdater().runStockDataUpdate(indexQuote)'''
 
-	d1.run_stock_data_update('GSPC')
+	d1.run_stock_data_update('DJI')
 	#d1.runFinancialStatementsUpdate('GSPC')
 
 	for _ in range(2):
