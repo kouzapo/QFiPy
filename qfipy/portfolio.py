@@ -410,6 +410,3 @@ class StockPortfolio:
 		plt.colorbar(label = "Sharpe Ratio")
 		plt.legend(loc = 2)
 		plt.show()
-
-class BondPortfolio:
-	pass
