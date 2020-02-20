@@ -462,7 +462,7 @@ class Stock(Index):
 	def set_weight(self, weight):
 		self.weight = weight
 
-	def ge_income_statement(self):
+	def get_income_statement(self):
 		return pd.read_csv('financial_statements/inc_' + self.quote + '.dat')
 
 	def get_balance_sheet(self):

@@ -215,7 +215,7 @@ class StockPortfolio:
 			weights: a ndarray with the weight of each stock.
 		"""
 
-		n = len(self.__stocks)
+		n = len(self.stocks)
 		rets, cov_matrix = self.__calc_cov_matrix()
 
 		def __min_func(weights):
@@ -238,8 +238,8 @@ class StockPortfolio:
 		i = 0
 
 		if save:
-			for stock in self.__stocks:
-				stock.setWeight(weights[i])
+			for stock in self.stocks:
+				stock.set_weight(weights[i])
 				i += 1
 
 		return weights
@@ -298,8 +298,8 @@ class StockPortfolio:
 			benchmark = Index('^GSPC')
 
 			sharpeRatio = (exRet - rf) / std
-			stocksBetas = np.array([s.calc_beta_alpha(benchmark)['beta'] for s in self.__stocks])
-			stocksAlphas = np.array([s.calc_beta_alpha(benchmark)['alpha'] for s in self.__stocks])
+			stocksBetas = np.array([s.calc_beta_alpha(benchmark)['beta'] for s in self.stocks])
+			stocksAlphas = np.array([s.calc_beta_alpha(benchmark)['alpha'] for s in self.stocks])
 
 			beta = stocksBetas.dot(weights)
 			alpha = stocksAlphas.dot(weights)
@@ -312,7 +312,7 @@ class StockPortfolio:
 
 	def print_summary(self, res):
 		D = pd.DataFrame([self.get_stocks_weights()], index = ['Allocation'])
-		D.columns = [stock.quote for stock in self.get_stocks()]
+		D.columns = [stock.quote for stock in self.stocks]
 
 		print('---------------------Portfolio Summary---------------------')
 		print(D,'\n')
@@ -327,7 +327,7 @@ class StockPortfolio:
 		print()
 
 	def plotEfficientFrontier(self, graph = True):
-		R = np.linspace(0.05, 0.35, 50)
+		R = np.linspace(0.01, 0.40, 70)
 		rets, cov_matrix = self.__calc_cov_matrix()
 
 		portExpRet = []
@@ -345,7 +345,7 @@ class StockPortfolio:
 		stockExpRet = []
 		stockStd = []
 
-		for stock in self.__stocks:
+		for stock in self.stocks:
 			stockExpRet.append(stock.calc_exp_return())
 			stockStd.append(stock.calc_std())
 
@@ -364,10 +364,10 @@ class StockPortfolio:
 		results = []
 
 		for i in range(N):
-			weights = np.random.random(len(self.__stocks))
+			weights = np.random.random(len(self.stocks))
 			weights /= np.sum(weights)
 
-			quotes = [s.quote for s in self.__stocks]
+			quotes = [s.quote for s in self.stocks]
 			stocks = []
 			j = 0
 
